@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, dialog, shell } = require('electron');
+const { app, BrowserWindow, ipcMain, dialog, shell, screen } = require('electron');
 const path = require('path');
 const fs = require('fs');
 const { spawn } = require('child_process');
@@ -10,8 +10,9 @@ const { buildSharedBundle } = require('./src/copyVendor');
 const { createDiagnostics } = require('./src/diagnostics');
 const directorRemote = require('./src/directorRemote');
 const artworkMatch = require('./src/artworkMatch');
+const kodexBridge = require('./src/kodexBridge');
 const { resolveDataDir } = require('./src/dataDir');
-const { loadSettings, saveSettings, usableDirectory, rememberLastImageDirectory } = require('./src/settings');
+const { loadSettings, saveSettings, usableDirectory, rememberLastImageDirectory, usableWindowBounds } = require('./src/settings');
 
 // Do this unconditionally, every launch, regardless of how the app was
 // started — npm's pre/post-install hooks are a convenience for local dev,
@@ -126,9 +127,11 @@ function flushCurrentCampaign() {
 }
 
 function createWindow() {
+  const saved = usableWindowBounds(appSettings.windowBounds, screen.getAllDisplays().map((d) => d.workArea));
   mainWindow = new BrowserWindow({
-    width: 460,
-    height: 820,
+    width: saved ? saved.width : 460,
+    height: saved ? saved.height : 820,
+    ...(saved && saved.x !== undefined ? { x: saved.x, y: saved.y } : {}),
     minWidth: 340,
     backgroundColor: '#141311',
     title: 'Kurator Session Manager',
@@ -140,7 +143,21 @@ function createWindow() {
       sandbox: false
     }
   });
+  if (saved && saved.maximized) mainWindow.maximize();
   mainWindow.loadFile(path.join(__dirname, 'renderer', 'index.html'));
+
+  // Remember where the window was and how big, so the next start opens the same way.
+  let boundsTimer = null;
+  const rememberBounds = () => {
+    if (!mainWindow || mainWindow.isDestroyed() || mainWindow.isMinimized() || mainWindow.isFullScreen()) return;
+    const maximized = mainWindow.isMaximized();
+    const b = maximized ? mainWindow.getNormalBounds() : mainWindow.getBounds();
+    appSettings = Object.assign({}, appSettings, { windowBounds: { x: b.x, y: b.y, width: b.width, height: b.height, maximized } });
+    try { saveSettings(DATA_DIR, appSettings); } catch { /* not worth interrupting for */ }
+  };
+  const rememberSoon = () => { clearTimeout(boundsTimer); boundsTimer = setTimeout(rememberBounds, 600); };
+  ['resize', 'move', 'maximize', 'unmaximize'].forEach((ev) => mainWindow.on(ev, rememberSoon));
+  mainWindow.on('close', () => { clearTimeout(boundsTimer); rememberBounds(); });
 
   const wc = mainWindow.webContents;
   mainWindow.on('unresponsive', () => diagnostics.log('window-unresponsive', { lastIpc }));
@@ -266,14 +283,23 @@ app.whenReady().then(() => {
     return { entry, campaign };
   });
 
+  ipcMain.handle('campaign:duplicate', (_event, { id, name }) => {
+    flushCurrentCampaign();
+    const entry = campaignManager.duplicateCampaign(DATA_DIR, id, name);
+    if (!entry) return null;
+    loadActiveCampaignStorage();
+    return { entry, campaign };
+  });
+
   ipcMain.handle('campaign:switch', (_event, id) => {
     flushCurrentCampaign();
     campaignManager.setActive(DATA_DIR, id);
     loadActiveCampaignStorage();
+    try { if (kodexApi) kodexApi.refresh(); } catch { /* not started yet */ }
     return campaign;
   });
 
-  ipcMain.handle('campaign:rename', (_event, { id, name }) => campaignManager.renameCampaign(DATA_DIR, id, name));
+  ipcMain.handle('campaign:rename', (_event, { id, name }) => { const r = campaignManager.renameCampaign(DATA_DIR, id, name); try { if (kodexApi) kodexApi.refresh(); } catch { /* not started yet */ } return r; });
 
   ipcMain.handle('campaign:delete', (_event, id) => {
     const wasActive = campaignManager.getActiveId(DATA_DIR) === id;
@@ -297,6 +323,17 @@ app.whenReady().then(() => {
     const results = transferRunner.runTransfer(DATA_DIR, campaign, campaignDir, ids, entries || []);
     diagnostics.log('transfer', results.map((r) => ({ id: r.id, ok: r.ok, error: r.error })));
     return results;
+  });
+
+  // --- Save a quest export (JSON for the players' quest website) -------
+  ipcMain.handle('quest:saveExport', async (_event, { name, json } = {}) => {
+    const safe = String(name || 'quest').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'quest';
+    const res = await dialog.showSaveDialog(BrowserWindow.getFocusedWindow() || undefined, {
+      title: 'Save quest export', defaultPath: path.join(app.getPath('documents'), `${safe}.json`), filters: [{ name: 'JSON', extensions: ['json'] }]
+    });
+    if (res.canceled || !res.filePath) return { ok: false };
+    try { fs.writeFileSync(res.filePath, String(json || ''), 'utf8'); return { ok: true, path: res.filePath }; }
+    catch (err) { return { ok: false, error: err.message }; }
   });
 
   // --- Open an entity's Notion link in the local Notion app -------------
@@ -323,6 +360,133 @@ app.whenReady().then(() => {
     try { await shell.openExternal(url); return { ok: true }; }
     catch (err) { return { ok: false, error: `Notion was not found at ${exePath || '(no path)'} and the system could not open the link (${err.message}).` }; }
   });
+
+  // --- Kodex connection --------------------------------------------------
+  // Packages arrive by file / zip / folder, from the watched inbox, or pushed to the loopback API. Whatever the
+  // route, they always end in the review dialog in the renderer: nothing is written without the user's say-so.
+  const kodexImages = new Set();
+  const kodexQueue = [];
+  let kodexRendererReady = false;
+  let kodexApi = null;
+  const rememberImages = (pkg) => kodexBridge.imagePathsOf(pkg).forEach((p) => kodexImages.add(p));
+  const kodexContext = () => {
+    const id = campaignManager.getActiveId(DATA_DIR);
+    const entry = campaignManager.listCampaigns(DATA_DIR).find((c) => c.id === id);
+    return { campaignId: id, campaignName: entry ? entry.name : '' };
+  };
+  function deliverToRenderer(payload) {
+    if (!kodexRendererReady) { kodexQueue.push(payload); return; }
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      if (mainWindow.isMinimized()) mainWindow.restore();
+      mainWindow.show(); mainWindow.focus();
+      mainWindow.webContents.send('kodex:incoming', payload);
+    }
+  }
+  ipcMain.handle('kodex:ready', () => { kodexRendererReady = true; while (kodexQueue.length) deliverToRenderer(kodexQueue.shift()); return true; });
+  ipcMain.handle('kodex:pickPackage', async (_event, { folder } = {}) => {
+    const res = await dialog.showOpenDialog(mainWindow, folder
+      ? { title: 'Choose a Kodex package folder', properties: ['openDirectory'] }
+      : { title: 'Choose a Kodex package', properties: ['openFile'], filters: [{ name: 'Kodex package', extensions: ['zip', 'json'] }] });
+    if (res.canceled || !res.filePaths.length) return { cancelled: true };
+    try { const r = kodexBridge.readPackage(res.filePaths[0]); rememberImages(r.pkg); return { pkg: r.pkg, name: r.name }; }
+    catch (err) { return { error: err.message }; }
+  });
+  ipcMain.handle('kodex:inboxList', () => {
+    const seen = new Set(appSettings.kodexInboxSeen || []);
+    return kodexBridge.scanInbox(appSettings.kodexInboxPath).filter((x) => !seen.has(x.key)).map((x) => ({ name: x.name, key: x.key, mtime: x.mtime }));
+  });
+  ipcMain.handle('kodex:inboxOpen', (_event, key) => {
+    const item = kodexBridge.scanInbox(appSettings.kodexInboxPath).find((x) => x.key === key);
+    if (!item) return { error: 'That package is no longer in the inbox folder.' };
+    try { const r = kodexBridge.readPackage(item.path); rememberImages(r.pkg); return { pkg: r.pkg, name: r.name, key }; }
+    catch (err) { return { error: err.message }; }
+  });
+  ipcMain.handle('kodex:inboxDone', (_event, key) => {
+    const seen = (appSettings.kodexInboxSeen || []).filter((k) => k !== key).concat(key).slice(-300);
+    appSettings = Object.assign({}, appSettings, { kodexInboxSeen: seen });
+    saveSettings(DATA_DIR, appSettings);
+    return true;
+  });
+  ipcMain.handle('kodex:readImage', (_event, filePath) => {
+    try {
+      const full = path.resolve(String(filePath || ''));
+      if (!kodexImages.has(full)) return { error: 'That image is not part of a Kodex package.' };
+      const ext = path.extname(full).toLowerCase().replace('.', '');
+      const mime = { png: 'image/png', jpg: 'image/jpeg', jpeg: 'image/jpeg', gif: 'image/gif', webp: 'image/webp' }[ext] || 'application/octet-stream';
+      return { dataUrl: `data:${mime};base64,${fs.readFileSync(full).toString('base64')}` };
+    } catch (err) { return { error: err.message }; }
+  });
+  ipcMain.handle('kodex:saveExport', async (_event, { name, json } = {}) => {
+    const safe = String(name || 'kurator-export').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'kurator-export';
+    const inbox = appSettings.kodexInboxPath && usableDirectory(appSettings.kodexInboxPath) ? appSettings.kodexInboxPath : app.getPath('documents');
+    const res = await dialog.showSaveDialog(mainWindow, { title: 'Save Kurator package for Kodex', defaultPath: path.join(inbox, `${safe}.json`), filters: [{ name: 'JSON', extensions: ['json'] }] });
+    if (res.canceled || !res.filePath) return { ok: false };
+    try { fs.writeFileSync(res.filePath, String(json || ''), 'utf8'); return { ok: true, path: res.filePath }; }
+    catch (err) { return { ok: false, error: err.message }; }
+  });
+  // Remember the workspace folder Kodex reports (its discovery file is gone while Kodex is closed).
+  const rememberKodexDir = (dir) => {
+    if (!dir || typeof dir !== 'string' || dir === appSettings.kodexWorkspaceDir) return;
+    appSettings.kodexWorkspaceDir = dir;
+    try { saveSettings(DATA_DIR, appSettings); } catch { /* not critical */ }
+  };
+  ipcMain.handle('kodex:status', async () => {
+    const p = await kodexBridge.probe('kodex');
+    if (p.running && p.context) rememberKodexDir(p.context.workspaceDir);
+    return { running: p.running, context: p.context || null };
+  });
+  ipcMain.handle('kodex:pages', async (_event, { q, type, limit } = {}) => {
+    const r = await kodexBridge.kodexPages({ q, type, limit, knownDir: appSettings.kodexWorkspaceDir || '' });
+    if (r && r.source === 'live') rememberKodexDir(r.workspaceDir);
+    return r;
+  });
+  // Open a page in Kodex. Running: live API (found / not found). Closed: the protocol link starts Kodex and opens it.
+  ipcMain.handle('kodex:openPage', async (_event, { kodexId, kuratorId, workspace, focus, viaLink } = {}) => {
+    if (!viaLink) {
+      const r = await kodexBridge.kodexOpen({ kodexId, kuratorId });
+      if (!r.notRunning) return r;
+    }
+    if (!kodexId) return { ok: false, notRunning: true, error: 'Kodex is not running.' };
+    const url = `astratera-lore://open/${encodeURIComponent(workspace || 'workspace')}/${encodeURIComponent(kodexId)}?tab=new${focus === false ? '&focus=0' : ''}`;
+    try { await shell.openExternal(url); return { ok: true, launched: true }; }
+    catch (err) { return { ok: false, error: `Kodex could not be opened (${err.message}). Is it installed and has it been started once?` }; }
+  });
+  ipcMain.handle('kodex:pushStatus', (_event, id) => kodexBridge.kodexImportStatus(id));
+  ipcMain.handle('kodex:push', (_event, pkg) => kodexBridge.pushToKodex(pkg));
+  ipcMain.handle('kodex:openLink', async (_event, url) => {
+    const u = String(url || '');
+    if (!/^astratera-lore:\/\//i.test(u)) return { ok: false, error: 'Not a Kodex link.' };
+    try { await shell.openExternal(u); return { ok: true }; } catch (err) { return { ok: false, error: `Kodex could not be opened (${err.message}). Is it installed and has it been started once?` }; }
+  });
+  ipcMain.handle('kodex:importFinished', (_event, { importId, report } = {}) => {
+    if (kodexApi && importId) kodexApi.setStatus(importId, { status: report && report.cancelled ? 'cancelled' : 'applied', report: report || null });
+    return true;
+  });
+  ipcMain.handle('kodex:refreshContext', () => { if (kodexApi) kodexApi.refresh(); return true; });
+  kodexBridge.startApiServer({
+    version: app.getVersion(),
+    getContext: kodexContext,
+    onImport: ({ importId, pkg }) => { rememberImages(pkg); deliverToRenderer({ source: 'push', importId, pkg, name: 'Pushed from Kodex' }); },
+    onOpen: (body) => {
+      if (!body || !body.kuratorId || !campaign || !campaign.entities[body.kuratorId]) return false;
+      deliverToRenderer({ source: 'open', entityId: body.kuratorId });
+      return true;
+    }
+  }).then((api) => { kodexApi = api; }).catch((err) => diagnostics.log('kodex-api-failed', { err }));
+  app.on('will-quit', () => { if (kodexApi) kodexApi.close(); });
+  let lastInboxKeys = '';
+  setInterval(() => {
+    try { const ep = kodexBridge.readEndpoint('kodex'); if (ep && ep.context) rememberKodexDir(ep.context.workspaceDir); } catch { /* ignore */ }
+    try {
+      const seen = new Set(appSettings.kodexInboxSeen || []);
+      const items = kodexBridge.scanInbox(appSettings.kodexInboxPath).filter((x) => !seen.has(x.key));
+      const keys = items.map((x) => x.key).join('|');
+      if (keys !== lastInboxKeys) {
+        lastInboxKeys = keys;
+        if (kodexRendererReady && mainWindow && !mainWindow.isDestroyed()) mainWindow.webContents.send('kodex:inbox', items.map((x) => ({ name: x.name, key: x.key, mtime: x.mtime })));
+      }
+    } catch { /* inbox folder unreachable: try again next tick */ }
+  }, 4000).unref();
 
   // --- App settings (Notion path, Director-tool paths) ------------------
   ipcMain.handle('settings:get', () => appSettings);

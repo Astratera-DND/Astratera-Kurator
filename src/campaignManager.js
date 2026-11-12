@@ -99,6 +99,29 @@ function createCampaign(baseDir, name, { seed = false } = {}) {
   return entry;
 }
 
+// A copy of a campaign (its data file and images; not its backup history) under a new name,
+// to start a new campaign from an existing setup. The copy becomes the active campaign, like a new one.
+function duplicateCampaign(baseDir, sourceId, name) {
+  const index = listCampaigns(baseDir);
+  const src = index.find((c) => c.id === sourceId);
+  const srcDir = campaignDir(baseDir, sourceId);
+  if (!src || !fs.existsSync(srcDir)) return null;
+  const id = makeId('camp');
+  const dest = campaignDir(baseDir, id);
+  fs.mkdirSync(dest, { recursive: true });
+  for (const entry of fs.readdirSync(srcDir, { withFileTypes: true })) {
+    if (entry.name === 'backups') continue;
+    const s = path.join(srcDir, entry.name);
+    const d = path.join(dest, entry.name);
+    if (entry.isDirectory()) copyDirRecursive(s, d); else fs.copyFileSync(s, d);
+  }
+  const entry = { id, name: (name && name.trim()) || `${src.name} (copy)`, createdAt: new Date().toISOString() };
+  index.push(entry);
+  saveIndex(baseDir, index);
+  setActive(baseDir, id);
+  return entry;
+}
+
 function renameCampaign(baseDir, id, name) {
   const index = listCampaigns(baseDir);
   const entry = index.find((c) => c.id === id);
@@ -199,6 +222,7 @@ module.exports = {
   setActive,
   campaignDir,
   createCampaign,
+  duplicateCampaign,
   renameCampaign,
   deleteCampaign,
   ensureActiveCampaign

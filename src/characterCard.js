@@ -94,6 +94,38 @@ const PERSONA_FIELDS = [
   { key: 'secret', label: 'Secret', placeholder: 'What they hide', long: true }
 ];
 
+// --- Profile: the four "who/what are they" fields shown at the top of an NPC (and two on a location) ---------
+// entity.profile = { race, age, appearance, history }   (all optional text; keys absent or '' when empty)
+// NPCs use all four, locations only appearance (called "Visual description") and history. Same keys as the
+// Kodex section roles (age, appearance, history) so the two tools line up. Colours are palette keys of
+// Constants.COLOR_PALETTE (hex given there) and match the Kodex side.
+const PROFILE_FIELDS = [
+  { key: 'race', label: 'Race', short: true, types: ['npc'], color: 'emerald', placeholder: 'e.g. Orc, Half-elf, Clockwork' },
+  { key: 'age', label: 'Age', short: true, types: ['npc'], color: 'orange', placeholder: 'e.g. 34, ancient, looks 20' },
+  { key: 'appearance', label: 'Visual description', types: ['npc', 'location'], color: 'cyan', placeholder: 'What the players see: looks, clothing, first impression' },
+  { key: 'history', label: 'History', types: ['npc', 'location'], color: 'violet', placeholder: 'Background, origin, what happened here / to them' }
+];
+function profileFieldsFor(type) { return PROFILE_FIELDS.filter((f) => f.types.includes(type)); }
+function sanitizeProfile(raw, type) {
+  const out = {};
+  profileFieldsFor(type).forEach((f) => { const v = raw && typeof raw === 'object' ? str(raw[f.key], f.short ? 200 : 8000) : ''; if (v.trim()) out[f.key] = v; });
+  return out;
+}
+// The non-empty profile fields of an entity, in display order: [{ key, label, color, short, text }]
+function profileOf(entity) {
+  if (!entity) return [];
+  const p = entity.profile && typeof entity.profile === 'object' ? entity.profile : {};
+  return profileFieldsFor(entity.type).filter((f) => typeof p[f.key] === 'string' && p[f.key].trim()).map((f) => ({ key: f.key, label: f.label, color: f.color, short: !!f.short, text: p[f.key] }));
+}
+function setProfileField(entity, key, value) {
+  const f = profileFieldsFor(entity.type).find((x) => x.key === key);
+  if (!f) return false;
+  if (!entity.profile || typeof entity.profile !== 'object') entity.profile = {};
+  if (String(value || '').trim()) entity.profile[key] = String(value); else delete entity.profile[key];
+  if (!Object.keys(entity.profile).length) delete entity.profile;
+  return true;
+}
+
 const SIZES = ['Tiny', 'Small', 'Medium', 'Large', 'Huge', 'Gargantuan'];
 
 function abilityMod(score) { return Math.floor((Number(score) - 10) / 2); }
@@ -343,6 +375,7 @@ function summary(entity) {
 const api = {
   ABILITY_HELP, SKILL_HELP, ABILITIES, SKILLS, VOICE_FIELDS, PERSONA_FIELDS, SIZES,
   abilityMod, fmt, crToNumber, proficiencyBonusForCR,
+  PROFILE_FIELDS, profileFieldsFor, sanitizeProfile, profileOf, setProfileField,
   defaultStatblock, sanitizeStatblock, sanitizeCard, ensureCard,
   hasVoiceOrPersona, getStatblock, ensureStatblock, isDefaultStatblock, resetStatblock,
   isPinned, togglePinned, pinnedFields, sanitizePinned,

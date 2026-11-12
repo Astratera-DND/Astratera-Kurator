@@ -1,0 +1,187 @@
+{
+  "format": "astratera-kodex-export",
+  "version": 2,
+  "schema": 2,
+  "app": "kodex",
+  "exportedAt": "2026-11-10T12:00:00.000Z",
+  "source": {
+    "app": "Astratera Kodex",
+    "version": "0.20.0",
+    "workspace": "Astratera"
+  },
+  "options": {
+    "subPlaces": true,
+    "residents": true,
+    "types": [
+      "npc"
+    ],
+    "cards": true,
+    "hidden": true,
+    "exclude": [],
+    "checkpoints": {
+      "enabled": false,
+      "timeline": null,
+      "scope": "all"
+    }
+  },
+  "root": "gate",
+  "scope": {
+    "rootId": "gate",
+    "entityIds": [
+      "gate"
+    ]
+  },
+  "groups": [
+    {
+      "id": "gate",
+      "name": "Rust Gate",
+      "parentId": null,
+      "type": "location"
+    }
+  ],
+  "entities": [
+    {
+      "id": "gate",
+      "kuratorId": null,
+      "updatedAt": "2026-11-10T07:23:56.398Z",
+      "kind": "location",
+      "type": "location",
+      "role": "root",
+      "name": "Rust Gate",
+      "profile": {
+        "race": "",
+        "age": ""
+      },
+      "icon": null,
+      "tags": [],
+      "summary": "",
+      "location": null,
+      "placeIds": [],
+      "parentId": null,
+      "path": [],
+      "sections": [
+        {
+          "role": "description",
+          "title": "Description",
+          "hidden": false,
+          "markdown": "A rusted gate. \n\n[DC check: Notice the hum](kodex-check:dcc_hum01)",
+          "text": "A rusted gate. \n\nDC check: Notice the hum",
+          "hash": "2e6fb71c0050b88c2bb51271c82852444181cd76",
+          "link": "astratera-lore://open/Astratera/gate?section=description&focus=0"
+        },
+        {
+          "role": "dcchecks",
+          "title": "DC Checks",
+          "hidden": false,
+          "markdown": "[DC check: Notice the hum](kodex-check:dcc_hum01)\n\n[DC check: Rusted frame](kodex-check:dcc_frame1)",
+          "text": "DC check: Notice the hum\n\nDC check: Rusted frame",
+          "hash": "e5638a79b4f11744d28e4ca7fa8cbd8f9c7dd2fe",
+          "link": "astratera-lore://open/Astratera/gate?section=dcchecks&focus=0"
+        }
+      ],
+      "body": {
+        "markdown": "",
+        "text": ""
+      },
+      "quotes": [],
+      "embeddedItems": [],
+      "toggles": [],
+      "statblock": null,
+      "extraStatblocks": [],
+      "props": [],
+      "cover": null,
+      "images": [],
+      "image": null,
+      "mentions": [],
+      "links": {
+        "lore": "astratera-lore://open/Astratera/gate?focus=0"
+      },
+      "children": [],
+      "presentHere": [],
+      "presentHereDeep": [],
+      "targets": {
+        "note:dcchecks": {
+          "markdown": "**DC Checks**\n[DC check: Notice the hum](kodex-check:dcc_hum01)\n\n[DC check: Rusted frame](kodex-check:dcc_frame1)",
+          "hash": "78ec7695b54699a5b8202565974f5071b96c7432"
+        },
+        "description": {
+          "markdown": "A rusted gate. \n\n[DC check: Notice the hum](kodex-check:dcc_hum01)",
+          "hash": "2e6fb71c0050b88c2bb51271c82852444181cd76"
+        },
+        "presence": {
+          "value": [],
+          "hash": "97d170e1550eee4afc0af065b78cda302a97674c",
+          "readonly": true
+        }
+      }
+    }
+  ],
+  "assets": [],
+  "warnings": [],
+  "dcChecks": [
+    {
+      "id": "dcc_hum01",
+      "kuratorId": null,
+      "name": "Notice the hum",
+      "checkType": "perception",
+      "mode": "scale",
+      "stackTiers": true,
+      "allowBoth": false,
+      "table": [
+        {
+          "dc": 10,
+          "markdown": "You hear a faint hum."
+        },
+        {
+          "dc": 15,
+          "markdown": "It repeats every few seconds."
+        }
+      ],
+      "conditions": [],
+      "hash": "19002ce336073c0a82fa92ca5d890249e495a131"
+    },
+    {
+      "id": "dcc_frame1",
+      "kuratorId": null,
+      "name": "Rusted frame",
+      "checkType": "perception",
+      "mode": "passfail",
+      "stackTiers": true,
+      "allowBoth": false,
+      "table": [],
+      "conditions": [
+        {
+          "trigger": "success",
+          "dc": 14,
+          "occurrence": 1,
+          "markdown": "A faint, repeating pulse behind the door."
+        },
+        {
+          "trigger": "failure",
+          "dc": 14,
+          "occurrence": 1,
+          "markdown": "Just the wind in the rusted frame."
+        },
+        {
+          "trigger": "failure",
+          "dc": 14,
+          "occurrence": 2,
+          "markdown": "You are sure there is nothing here."
+        },
+        {
+          "trigger": "nat1",
+          "dc": 0,
+          "occurrence": 1,
+          "markdown": "You knock something loose."
+        },
+        {
+          "trigger": "nat20",
+          "dc": 0,
+          "occurrence": 1,
+          "markdown": "You pinpoint the exact spot."
+        }
+      ],
+      "hash": "e704b42ee65231db547c88f4232666687921a469"
+    }
+  ]
+}

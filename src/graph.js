@@ -25,7 +25,7 @@ const SIZES = {
 function entityHeight(node) { return SIZES.entityHead + node.ports.length * SIZES.portH + SIZES.entityPad; }
 
 function sortedCheckpoints(campaign) {
-  return (campaign.checkpoints || []).slice().sort((a, b) => (a.order || 0) - (b.order || 0));
+  return (campaign.checkpoints || []).filter((c) => !c.encounter).sort((a, b) => (a.order || 0) - (b.order || 0));
 }
 
 // Readable one-line excerpt of a piece of content.
@@ -34,7 +34,7 @@ function plainText(campaign, s) {
     .replace(/<[^>]*>/g, ' ')
     .replace(/\[\[SAY:[a-zA-Z0-9_]+\]\]/g, '').replace(/\[\[\/SAY\]\]/g, '')
     .replace(/\[\[JUMP:[a-zA-Z0-9_:]+\]\]/g, '').replace(/\[\[\/JUMP\]\]/g, '')
-    .replace(/\[\[(DCCHECK|SCENEBTN|MUSICBTN|QFBTN|DIRBTN):[^\]]*\]\]/g, '').replace(/\[\[\/(SCENEBTN|MUSICBTN|QFBTN|DIRBTN)\]\]/g, '')
+    .replace(/\[\[(DCCHECK|REWARD|SCENEBTN|MUSICBTN|QFBTN|DIRBTN):[^\]]*\]\]/g, '').replace(/\[\[\/(SCENEBTN|MUSICBTN|QFBTN|DIRBTN)\]\]/g, '')
     .replace(/\[\[\/?IF(:[^\]]*)?\]\]/g, '')
     .replace(/\[\[([a-zA-Z0-9_]+)\]\]/g, (m, id) => (campaign.entities[id] ? campaign.entities[id].name : ''))
     .replace(/\s+/g, ' ').trim();
@@ -75,7 +75,7 @@ function buildGraph(campaign, { includeRefs = true } = {}) {
   const edges = [];
   const add = (n) => { nodes.push(n); byId[n.id] = n; return n; };
 
-  const entities = Object.values(campaign.entities || {}).filter((e) => e.type !== 'quest');
+  const entities = Object.values(campaign.entities || {}).filter((e) => e.type !== 'quest' && !e.encounter);
   entities.forEach((e) => add({
     id: e.id, kind: 'entity', type: e.type, name: e.name, color: e.color, icon: e.icon, groupId: e.groupId || null,
     image: e.image && e.image.filename ? e.image : null, ports: [], portCounts: {}

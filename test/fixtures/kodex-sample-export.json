@@ -1,0 +1,751 @@
+{
+  "format": "astratera-kodex-export",
+  "version": 2,
+  "schema": 2,
+  "app": "kodex",
+  "exportedAt": "2026-11-09T12:47:30.260Z",
+  "source": {
+    "app": "Astratera Kodex",
+    "version": "0.12.0",
+    "workspace": "My world"
+  },
+  "options": {
+    "subPlaces": true,
+    "residents": true,
+    "types": [
+      "npc"
+    ],
+    "cards": true,
+    "hidden": true,
+    "exclude": [],
+    "checkpoints": {
+      "enabled": true,
+      "timeline": null,
+      "scope": "all"
+    }
+  },
+  "root": "00000000-0000-4000-8000-000000000002",
+  "scope": {
+    "rootId": "00000000-0000-4000-8000-000000000002",
+    "entityIds": [
+      "00000000-0000-4000-8000-000000000002",
+      "00000000-0000-4000-8000-000000000003",
+      "00000000-0000-4000-8000-000000000004",
+      "00000000-0000-4000-8000-000000000005"
+    ]
+  },
+  "groups": [
+    {
+      "id": "00000000-0000-4000-8000-000000000002",
+      "name": "Hearthhold-47",
+      "parentId": null,
+      "type": "city"
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000003",
+      "name": "Rusted Spire Market",
+      "parentId": "00000000-0000-4000-8000-000000000002",
+      "type": "district"
+    }
+  ],
+  "entities": [
+    {
+      "id": "00000000-0000-4000-8000-000000000002",
+      "kuratorId": null,
+      "updatedAt": "2026-11-09T12:47:30.239Z",
+      "kind": "location",
+      "type": "city",
+      "role": "root",
+      "name": "Hearthhold-47",
+      "profile": {
+        "race": "",
+        "age": ""
+      },
+      "icon": "🏙️",
+      "tags": [
+        "port"
+      ],
+      "summary": "A walled port city built around a fallen tether anchor.",
+      "location": null,
+      "placeIds": [],
+      "parentId": null,
+      "path": [
+        "Karthy Reach"
+      ],
+      "sections": [
+        {
+          "role": "summary",
+          "title": "Summary",
+          "hidden": false,
+          "markdown": "A walled port city built around a fallen tether anchor.",
+          "text": "A walled port city built around a fallen tether anchor.",
+          "hash": "9944c81091b4f506bf37a7cc9d4d2f8cf64f1c71",
+          "link": "astratera-lore://open/My%20world/00000000-0000-4000-8000-000000000002?section=summary&focus=0"
+        },
+        {
+          "role": "description",
+          "title": "Description",
+          "hidden": false,
+          "markdown": "You arrive at dusk. Rust-red **scaffolding** climbs the anchor; lamps flicker on one by one.",
+          "text": "You arrive at dusk. Rust-red scaffolding climbs the anchor; lamps flicker on one by one.",
+          "hash": "1e30ec3e13969de4c9da9fe77b62725b4c59c2b7",
+          "link": "astratera-lore://open/My%20world/00000000-0000-4000-8000-000000000002?section=description&focus=0"
+        },
+        {
+          "role": "atmosphere",
+          "title": "Atmosphere",
+          "hidden": false,
+          "markdown": "Salt, coal smoke, the hum of the tether stump.",
+          "text": "Salt, coal smoke, the hum of the tether stump.",
+          "hash": "1a7959e7cb2f70fd95cd314b366f0cefb5f00038",
+          "link": "astratera-lore://open/My%20world/00000000-0000-4000-8000-000000000002?section=atmosphere&focus=0"
+        },
+        {
+          "role": "history",
+          "title": "Geschichte",
+          "hidden": false,
+          "markdown": "Founded by the [Signal Corps](kodex:00000000-0000-4000-8000-000000000011) after the Fall.",
+          "text": "Founded by the Signal Corps after the Fall.",
+          "hash": "8d5749d3adba7de5fd32a6cefa5504dfb7001aea",
+          "link": "astratera-lore://open/My%20world/00000000-0000-4000-8000-000000000002?section=history&focus=0"
+        },
+        {
+          "role": "rumours",
+          "title": "Rumours",
+          "hidden": false,
+          "markdown": "- A ghost ship haunts pier 9.\n- The mayor never sleeps.",
+          "text": "• A ghost ship haunts pier 9.\n• The mayor never sleeps.",
+          "hash": "e27a752126a321be7b733be9370f07d2de00aee0",
+          "link": "astratera-lore://open/My%20world/00000000-0000-4000-8000-000000000002?section=rumours&focus=0"
+        },
+        {
+          "role": "secrets",
+          "title": "Secrets",
+          "hidden": true,
+          "markdown": "The mayor is a cultist of the stump.",
+          "text": "The mayor is a cultist of the stump.",
+          "hash": "6ac49f3d77e37bde59d3cc41da1a6863b16d162a",
+          "link": "astratera-lore://open/My%20world/00000000-0000-4000-8000-000000000002?section=secrets&focus=0"
+        }
+      ],
+      "body": {
+        "markdown": "Loose note: ask [Grey man](kodex:00000000-0000-4000-8000-000000000004) about the wreck.\n\n**[Vladi](kodex:00000000-0000-4000-8000-000000000005)** – Fence and fixer.",
+        "text": "Loose note: ask Grey man about the wreck.\n\nVladi – Fence and fixer."
+      },
+      "statblock": null,
+      "extraStatblocks": [],
+      "props": [
+        {
+          "name": "Population",
+          "type": "text",
+          "value": "12,000"
+        }
+      ],
+      "cover": null,
+      "images": [],
+      "image": null,
+      "mentions": [
+        {
+          "id": "00000000-0000-4000-8000-000000000011",
+          "name": "Signal Corps",
+          "inPackage": false
+        },
+        {
+          "id": "00000000-0000-4000-8000-000000000004",
+          "name": "Grey man",
+          "inPackage": true
+        },
+        {
+          "id": "00000000-0000-4000-8000-000000000005",
+          "name": "Vladi",
+          "inPackage": true
+        }
+      ],
+      "links": {
+        "lore": "astratera-lore://open/My%20world/00000000-0000-4000-8000-000000000002?focus=0"
+      },
+      "children": [
+        "00000000-0000-4000-8000-000000000003"
+      ],
+      "presentHere": [
+        "00000000-0000-4000-8000-000000000004"
+      ],
+      "presentHereDeep": [
+        "00000000-0000-4000-8000-000000000004",
+        "00000000-0000-4000-8000-000000000005"
+      ],
+      "targets": {
+        "summary": {
+          "markdown": "A walled port city built around a fallen tether anchor.",
+          "hash": "9944c81091b4f506bf37a7cc9d4d2f8cf64f1c71"
+        },
+        "profile.history": {
+          "markdown": "Founded by the [Signal Corps](kodex:00000000-0000-4000-8000-000000000011) after the Fall.",
+          "hash": "8d5749d3adba7de5fd32a6cefa5504dfb7001aea"
+        },
+        "beat:rumours": {
+          "markdown": "- A ghost ship haunts pier 9.\n- The mayor never sleeps.",
+          "hash": "e27a752126a321be7b733be9370f07d2de00aee0"
+        },
+        "note:secrets": {
+          "markdown": "**Secrets**\nThe mayor is a cultist of the stump.",
+          "hash": "e69cb3bb60cf399740b0d37187bf9d324a7d4a55"
+        },
+        "description": {
+          "markdown": "You arrive at dusk. Rust-red **scaffolding** climbs the anchor; lamps flicker on one by one.\n\nLoose note: ask [Grey man](kodex:00000000-0000-4000-8000-000000000004) about the wreck.\n\n**[Vladi](kodex:00000000-0000-4000-8000-000000000005)** – Fence and fixer.\n\n**Atmosphere**\nSalt, coal smoke, the hum of the tether stump.",
+          "hash": "8731a8665f09f7f22d99ebf95870dc6ecf539be1",
+          "combined": true
+        },
+        "presence": {
+          "value": [
+            "00000000-0000-4000-8000-000000000004"
+          ],
+          "hash": "ad4ef0d26205685524085e14b9f88e2ec5cff724",
+          "readonly": true
+        }
+      }
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000003",
+      "kuratorId": null,
+      "updatedAt": "2026-11-09T12:47:30.242Z",
+      "kind": "location",
+      "type": "district",
+      "role": "place",
+      "name": "Rusted Spire Market",
+      "profile": {
+        "race": "",
+        "age": ""
+      },
+      "icon": null,
+      "tags": [],
+      "summary": "A crowded market under the anchor's shadow.",
+      "location": null,
+      "placeIds": [],
+      "parentId": "00000000-0000-4000-8000-000000000002",
+      "path": [
+        "Karthy Reach",
+        "Hearthhold-47"
+      ],
+      "sections": [
+        {
+          "role": "description",
+          "title": "Description",
+          "hidden": false,
+          "markdown": "A crowded market under the anchor's shadow.",
+          "text": "A crowded market under the anchor's shadow.",
+          "hash": "efd52f8dd015ebac3ec28f6325dd312de8b769ad",
+          "link": "astratera-lore://open/My%20world/00000000-0000-4000-8000-000000000003?section=description&focus=0"
+        },
+        {
+          "role": "hooks",
+          "title": "Hooks",
+          "hidden": false,
+          "markdown": "A pickpocket strikes near the fountain.",
+          "text": "A pickpocket strikes near the fountain.",
+          "hash": "ca43ed63273ca6e18fe62c951b4b7bf776bc43f4",
+          "link": "astratera-lore://open/My%20world/00000000-0000-4000-8000-000000000003?section=hooks&focus=0"
+        }
+      ],
+      "body": {
+        "markdown": "",
+        "text": ""
+      },
+      "statblock": null,
+      "extraStatblocks": [],
+      "props": [],
+      "cover": null,
+      "images": [],
+      "image": null,
+      "mentions": [],
+      "links": {
+        "lore": "astratera-lore://open/My%20world/00000000-0000-4000-8000-000000000003?focus=0"
+      },
+      "children": [],
+      "presentHere": [
+        "00000000-0000-4000-8000-000000000005"
+      ],
+      "presentHereDeep": [
+        "00000000-0000-4000-8000-000000000005"
+      ],
+      "targets": {
+        "summary": {
+          "markdown": "A crowded market under the anchor's shadow.",
+          "hash": "efd52f8dd015ebac3ec28f6325dd312de8b769ad"
+        },
+        "beat:hooks": {
+          "markdown": "A pickpocket strikes near the fountain.",
+          "hash": "ca43ed63273ca6e18fe62c951b4b7bf776bc43f4"
+        },
+        "description": {
+          "markdown": "A crowded market under the anchor's shadow.",
+          "hash": "efd52f8dd015ebac3ec28f6325dd312de8b769ad"
+        },
+        "presence": {
+          "value": [
+            "00000000-0000-4000-8000-000000000005"
+          ],
+          "hash": "223350c3397fbef87769ae154f75f47063c2597c",
+          "readonly": true
+        }
+      }
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000004",
+      "kuratorId": null,
+      "updatedAt": "2026-11-09T12:47:30.250Z",
+      "kind": "npc",
+      "type": "npc",
+      "role": "resident",
+      "name": "Grey man",
+      "profile": {
+        "race": "Humans (augmented)",
+        "age": "Mid-fifties"
+      },
+      "icon": null,
+      "tags": [
+        "informant"
+      ],
+      "summary": "Tall and stooped, grey coat to the ankles.",
+      "location": {
+        "id": "00000000-0000-4000-8000-000000000002",
+        "path": [
+          "Karthy Reach",
+          "Hearthhold-47"
+        ],
+        "via": "location"
+      },
+      "placeIds": [
+        "00000000-0000-4000-8000-000000000002",
+        "00000000-0000-4000-8000-000000000010"
+      ],
+      "parentId": null,
+      "path": [
+        "Karthy Reach",
+        "Hearthhold-47"
+      ],
+      "sections": [
+        {
+          "role": "age",
+          "title": "Age",
+          "hidden": false,
+          "markdown": "Mid-fifties",
+          "text": "Mid-fifties",
+          "hash": "691fcf94a101fbe7d5335e41002b126a3793e7af",
+          "link": "astratera-lore://open/My%20world/00000000-0000-4000-8000-000000000004?section=age&focus=0"
+        },
+        {
+          "role": "appearance",
+          "title": "Appearance",
+          "hidden": false,
+          "markdown": "Tall and stooped, grey coat to the ankles.",
+          "text": "Tall and stooped, grey coat to the ankles.",
+          "hash": "4730febefbfde7ad2bc22a7cedd3788315b3f0f8",
+          "link": "astratera-lore://open/My%20world/00000000-0000-4000-8000-000000000004?section=appearance&focus=0"
+        },
+        {
+          "role": "personality",
+          "title": "Personality",
+          "hidden": false,
+          "markdown": "Patient, dry humour, *never* raises his voice.",
+          "text": "Patient, dry humour, never raises his voice.",
+          "hash": "25b8bb045a21e387878f7608d542280fd0d65915",
+          "link": "astratera-lore://open/My%20world/00000000-0000-4000-8000-000000000004?section=personality&focus=0"
+        },
+        {
+          "role": "dialog",
+          "title": "Dialog",
+          "hidden": false,
+          "markdown": "- \"You are early.\"\n- \"Ask the wreck. Not me.\"",
+          "text": "• \"You are early.\"\n• \"Ask the wreck. Not me.\"",
+          "hash": "203d2a46a59a11954ee950f552feb1609ac1806e",
+          "link": "astratera-lore://open/My%20world/00000000-0000-4000-8000-000000000004?section=dialog&focus=0"
+        },
+        {
+          "role": "history",
+          "title": "History",
+          "hidden": false,
+          "markdown": "Served in the [Signal Corps](kodex:00000000-0000-4000-8000-000000000011) until the tether came down.",
+          "text": "Served in the Signal Corps until the tether came down.",
+          "hash": "c9713bb1f18d2966cbe34539282081bff57e4f9f",
+          "link": "astratera-lore://open/My%20world/00000000-0000-4000-8000-000000000004?section=history&focus=0"
+        },
+        {
+          "role": "secrets",
+          "title": "Secrets",
+          "hidden": true,
+          "markdown": "He sabotaged the anchor.",
+          "text": "He sabotaged the anchor.",
+          "hash": "9f556778a50782d908eb24e98d8a2c91a5ce9254",
+          "link": "astratera-lore://open/My%20world/00000000-0000-4000-8000-000000000004?section=secrets&focus=0"
+        },
+        {
+          "role": "hooks",
+          "title": "Hooks",
+          "hidden": false,
+          "markdown": "Will trade the wreck's location for a favour.",
+          "text": "Will trade the wreck's location for a favour.",
+          "hash": "6d75e302deb11ce0b4fbefb10f2ddb4891732640",
+          "link": "astratera-lore://open/My%20world/00000000-0000-4000-8000-000000000004?section=hooks&focus=0"
+        },
+        {
+          "role": "stats",
+          "title": "Stats",
+          "hidden": false,
+          "markdown": "",
+          "text": "",
+          "hash": "da39a3ee5e6b4b0d3255bfef95601890afd80709",
+          "link": "astratera-lore://open/My%20world/00000000-0000-4000-8000-000000000004?section=stats&focus=0"
+        }
+      ],
+      "body": {
+        "markdown": "Prefers the market bench near the fountain.",
+        "text": "Prefers the market bench near the fountain."
+      },
+      "statblock": {
+        "size": "Medium",
+        "creatureType": "Humanoid",
+        "alignment": "Neutral",
+        "ac": 14,
+        "hp": 27,
+        "hpDice": "5d8+5",
+        "speed": "30 ft.",
+        "abilities": {
+          "str": 10,
+          "dex": 14,
+          "con": 12,
+          "int": 13,
+          "wis": 12,
+          "cha": 9
+        },
+        "saveProf": {
+          "str": false,
+          "dex": true,
+          "con": false,
+          "int": false,
+          "wis": false,
+          "cha": false
+        },
+        "skills": {
+          "Perception": 1,
+          "Stealth": 2
+        },
+        "skillOverrides": {
+          "Insight": 9
+        },
+        "passivePerceptionOverride": null,
+        "passiveInsightOverride": null,
+        "senses": "Darkvision 60 ft.",
+        "languages": "Common, Thieves' Cant",
+        "cr": "1/2",
+        "gear": "Dagger, lockpicks",
+        "traits": "Ex-engineer. Has advantage on checks with tether tech.",
+        "actions": "Dagger. Melee Attack Roll: +4, reach 5 ft. Hit: 4 (1d4+2) Piercing damage."
+      },
+      "extraStatblocks": [],
+      "props": [],
+      "cover": null,
+      "images": [],
+      "image": null,
+      "mentions": [
+        {
+          "id": "00000000-0000-4000-8000-000000000011",
+          "name": "Signal Corps",
+          "inPackage": false
+        }
+      ],
+      "links": {
+        "lore": "astratera-lore://open/My%20world/00000000-0000-4000-8000-000000000004?focus=0"
+      },
+      "targets": {
+        "summary": {
+          "markdown": "Tall and stooped, grey coat to the ankles.",
+          "hash": "4730febefbfde7ad2bc22a7cedd3788315b3f0f8"
+        },
+        "profile.age": {
+          "markdown": "Mid-fifties",
+          "hash": "691fcf94a101fbe7d5335e41002b126a3793e7af"
+        },
+        "profile.appearance": {
+          "markdown": "Tall and stooped, grey coat to the ankles.",
+          "hash": "4730febefbfde7ad2bc22a7cedd3788315b3f0f8"
+        },
+        "note:personality": {
+          "markdown": "**Personality**\nPatient, dry humour, *never* raises his voice.",
+          "hash": "9d3e0e164660c56a16ec5a1c9f1bf0f335136ab9"
+        },
+        "topic:dialog": {
+          "markdown": "- \"You are early.\"\n- \"Ask the wreck. Not me.\"",
+          "hash": "203d2a46a59a11954ee950f552feb1609ac1806e"
+        },
+        "profile.history": {
+          "markdown": "Served in the [Signal Corps](kodex:00000000-0000-4000-8000-000000000011) until the tether came down.",
+          "hash": "c9713bb1f18d2966cbe34539282081bff57e4f9f"
+        },
+        "note:secrets": {
+          "markdown": "**Secrets**\nHe sabotaged the anchor.",
+          "hash": "a68955498988cd578b1501038b253c9b27c20ed7"
+        },
+        "note:hooks": {
+          "markdown": "**Hooks**\nWill trade the wreck's location for a favour.",
+          "hash": "7b1358050053460e4d05cbd03fa760eb3c0d13c7"
+        },
+        "note:body": {
+          "markdown": "Prefers the market bench near the fountain.",
+          "hash": "c978182c0b33b4af6e56cd3de91169b82692f14b",
+          "readonly": true
+        },
+        "profile.race": {
+          "markdown": "Humans (augmented)",
+          "hash": "26ffa01eb8dca96f966de6806617b37333c8df3b",
+          "readonly": true
+        },
+        "statblock": {
+          "value": {
+            "size": "Medium",
+            "creatureType": "Humanoid",
+            "alignment": "Neutral",
+            "ac": 14,
+            "hp": 27,
+            "hpDice": "5d8+5",
+            "speed": "30 ft.",
+            "abilities": {
+              "str": 10,
+              "dex": 14,
+              "con": 12,
+              "int": 13,
+              "wis": 12,
+              "cha": 9
+            },
+            "saveProf": {
+              "str": false,
+              "dex": true,
+              "con": false,
+              "int": false,
+              "wis": false,
+              "cha": false
+            },
+            "skills": {
+              "Perception": 1,
+              "Stealth": 2
+            },
+            "skillOverrides": {
+              "Insight": 9
+            },
+            "passivePerceptionOverride": null,
+            "passiveInsightOverride": null,
+            "senses": "Darkvision 60 ft.",
+            "languages": "Common, Thieves' Cant",
+            "cr": "1/2",
+            "gear": "Dagger, lockpicks",
+            "traits": "Ex-engineer. Has advantage on checks with tether tech.",
+            "actions": "Dagger. Melee Attack Roll: +4, reach 5 ft. Hit: 4 (1d4+2) Piercing damage."
+          },
+          "hash": "63b50978287ce5b9de53dd402f1238a625c148de"
+        }
+      }
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000005",
+      "kuratorId": null,
+      "updatedAt": "2026-11-09T12:47:30.252Z",
+      "kind": "npc",
+      "type": "npc",
+      "role": "resident",
+      "name": "Vladi",
+      "profile": {
+        "race": "",
+        "age": ""
+      },
+      "icon": null,
+      "tags": [],
+      "summary": "Fence and fixer.",
+      "location": {
+        "id": "00000000-0000-4000-8000-000000000003",
+        "path": [
+          "Karthy Reach",
+          "Hearthhold-47",
+          "Rusted Spire Market"
+        ],
+        "via": "location"
+      },
+      "placeIds": [
+        "00000000-0000-4000-8000-000000000003"
+      ],
+      "parentId": null,
+      "path": [
+        "Karthy Reach",
+        "Hearthhold-47",
+        "Rusted Spire Market"
+      ],
+      "sections": [
+        {
+          "role": "summary",
+          "title": "Summary",
+          "hidden": false,
+          "markdown": "Fence and fixer.",
+          "text": "Fence and fixer.",
+          "hash": "4d5038015e8a7cc972d1caaaf376ee02b5694662",
+          "link": "astratera-lore://open/My%20world/00000000-0000-4000-8000-000000000005?section=summary&focus=0"
+        },
+        {
+          "role": "appearance",
+          "title": "Appearance",
+          "hidden": false,
+          "markdown": "Gold tooth, patched cloak.",
+          "text": "Gold tooth, patched cloak.",
+          "hash": "78389ef2c31fa207f8995f72333f4fc6b0a88764",
+          "link": "astratera-lore://open/My%20world/00000000-0000-4000-8000-000000000005?section=appearance&focus=0"
+        },
+        {
+          "role": "stats",
+          "title": "Stats",
+          "hidden": false,
+          "markdown": "",
+          "text": "",
+          "hash": "da39a3ee5e6b4b0d3255bfef95601890afd80709",
+          "link": "astratera-lore://open/My%20world/00000000-0000-4000-8000-000000000005?section=stats&focus=0"
+        }
+      ],
+      "body": {
+        "markdown": "",
+        "text": ""
+      },
+      "statblock": {
+        "size": "Medium",
+        "creatureType": "Humanoid (Any)",
+        "alignment": "Neutral",
+        "ac": 10,
+        "hp": 4,
+        "hpDice": "1d8",
+        "speed": "30 ft.",
+        "abilities": {
+          "str": 10,
+          "dex": 10,
+          "con": 10,
+          "int": 10,
+          "wis": 10,
+          "cha": 10
+        },
+        "saveProf": {
+          "str": false,
+          "dex": false,
+          "con": false,
+          "int": false,
+          "wis": false,
+          "cha": false
+        },
+        "skills": {},
+        "skillOverrides": {},
+        "passivePerceptionOverride": null,
+        "passiveInsightOverride": null,
+        "senses": "Passive Perception 10",
+        "languages": "Common plus one other language",
+        "cr": "0",
+        "gear": "",
+        "traits": "",
+        "actions": "Unarmed Strike. Melee Attack Roll: +2, reach 5 ft. Hit: 1 Bludgeoning damage."
+      },
+      "extraStatblocks": [],
+      "props": [],
+      "cover": null,
+      "images": [],
+      "image": null,
+      "mentions": [],
+      "links": {
+        "lore": "astratera-lore://open/My%20world/00000000-0000-4000-8000-000000000005?focus=0"
+      },
+      "targets": {
+        "summary": {
+          "markdown": "Fence and fixer.",
+          "hash": "4d5038015e8a7cc972d1caaaf376ee02b5694662"
+        },
+        "profile.appearance": {
+          "markdown": "Gold tooth, patched cloak.",
+          "hash": "78389ef2c31fa207f8995f72333f4fc6b0a88764"
+        },
+        "statblock": {
+          "value": {
+            "size": "Medium",
+            "creatureType": "Humanoid (Any)",
+            "alignment": "Neutral",
+            "ac": 10,
+            "hp": 4,
+            "hpDice": "1d8",
+            "speed": "30 ft.",
+            "abilities": {
+              "str": 10,
+              "dex": 10,
+              "con": 10,
+              "int": 10,
+              "wis": 10,
+              "cha": 10
+            },
+            "saveProf": {
+              "str": false,
+              "dex": false,
+              "con": false,
+              "int": false,
+              "wis": false,
+              "cha": false
+            },
+            "skills": {},
+            "skillOverrides": {},
+            "passivePerceptionOverride": null,
+            "passiveInsightOverride": null,
+            "senses": "Passive Perception 10",
+            "languages": "Common plus one other language",
+            "cr": "0",
+            "gear": "",
+            "traits": "",
+            "actions": "Unarmed Strike. Melee Attack Roll: +2, reach 5 ft. Hit: 1 Bludgeoning damage."
+          },
+          "hash": "8d136cd727f92d07f4ed1f6c14c1321a8ac7811b"
+        }
+      }
+    }
+  ],
+  "assets": [],
+  "warnings": [],
+  "checkpoints": {
+    "timeline": {
+      "id": "campaign",
+      "name": "Campaign"
+    },
+    "current": null,
+    "scope": "all",
+    "items": [
+      {
+        "id": "c6345200-c06a-4ecb-8b99-ed08f362fedb",
+        "title": "Landing at Hearthhold",
+        "rank": 1,
+        "current": false,
+        "track": "Party",
+        "text": "The party arrives.",
+        "markdown": "The party arrives.",
+        "kinds": [
+          "normal"
+        ],
+        "pages": [
+          "00000000-0000-4000-8000-000000000002",
+          "00000000-0000-4000-8000-000000000004"
+        ]
+      },
+      {
+        "id": "aa926204-99eb-4b9a-87cb-4a943cdefd0a",
+        "title": "Market robbery",
+        "rank": 2,
+        "current": false,
+        "track": "Party",
+        "text": "A pickpocket strikes.",
+        "markdown": "A pickpocket strikes.",
+        "kinds": [
+          "normal"
+        ],
+        "pages": [
+          "00000000-0000-4000-8000-000000000003"
+        ]
+      }
+    ]
+  }
+}

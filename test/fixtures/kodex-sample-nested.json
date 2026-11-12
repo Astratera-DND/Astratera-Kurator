@@ -1,0 +1,539 @@
+{
+  "format": "astratera-kodex-export",
+  "version": 2,
+  "schema": 2,
+  "app": "kodex",
+  "exportedAt": "2026-11-09T15:53:42.546Z",
+  "source": {
+    "app": "Astratera Kodex",
+    "version": "0.14.0",
+    "workspace": "Sample"
+  },
+  "options": {
+    "subPlaces": true,
+    "residents": true,
+    "types": [
+      "npc"
+    ],
+    "cards": true,
+    "hidden": true,
+    "exclude": [],
+    "checkpoints": {
+      "enabled": false,
+      "timeline": null,
+      "scope": "all"
+    }
+  },
+  "root": "gate",
+  "scope": {
+    "rootId": "gate",
+    "entityIds": [
+      "gate",
+      "hospital",
+      "room",
+      "doctor",
+      "nurse"
+    ]
+  },
+  "groups": [
+    {
+      "id": "gate",
+      "name": "Liminal Gate",
+      "parentId": null,
+      "type": "city"
+    },
+    {
+      "id": "hospital",
+      "name": "Hospital",
+      "parentId": "gate",
+      "type": "district"
+    },
+    {
+      "id": "room",
+      "name": "Patient Room",
+      "parentId": "hospital",
+      "type": "venue"
+    }
+  ],
+  "entities": [
+    {
+      "id": "gate",
+      "kuratorId": null,
+      "updatedAt": null,
+      "kind": "location",
+      "type": "city",
+      "role": "root",
+      "name": "Liminal Gate",
+      "profile": {
+        "race": "",
+        "age": ""
+      },
+      "icon": null,
+      "tags": [],
+      "summary": "A gate between worlds.",
+      "location": null,
+      "placeIds": [],
+      "parentId": null,
+      "path": [],
+      "sections": [
+        {
+          "role": "summary",
+          "title": "Summary",
+          "hidden": false,
+          "markdown": "A gate between worlds.",
+          "text": "A gate between worlds.",
+          "hash": "3d2b787449ed13c734832e7b3a79370aa3dc6a85",
+          "link": "astratera-lore://open/Sample/gate?section=summary&focus=0"
+        }
+      ],
+      "body": {
+        "markdown": "Text of the gate.\n\n**[Hospital](kodex:hospital)** – White corridors.",
+        "text": "Text of the gate.\n\nHospital – White corridors."
+      },
+      "quotes": [],
+      "toggles": [],
+      "statblock": null,
+      "extraStatblocks": [],
+      "props": [],
+      "cover": null,
+      "images": [],
+      "image": null,
+      "mentions": [
+        {
+          "id": "hospital",
+          "name": "Hospital",
+          "inPackage": true
+        }
+      ],
+      "links": {
+        "lore": "astratera-lore://open/Sample/gate?focus=0"
+      },
+      "children": [
+        "hospital"
+      ],
+      "presentHere": [],
+      "presentHereDeep": [
+        "doctor",
+        "nurse"
+      ],
+      "targets": {
+        "summary": {
+          "markdown": "A gate between worlds.",
+          "hash": "3d2b787449ed13c734832e7b3a79370aa3dc6a85"
+        },
+        "description": {
+          "markdown": "Text of the gate.\n\n**[Hospital](kodex:hospital)** – White corridors.",
+          "hash": "2d4626c7710918767f5569729b08024db256f394",
+          "combined": true
+        },
+        "presence": {
+          "value": [],
+          "hash": "97d170e1550eee4afc0af065b78cda302a97674c",
+          "readonly": true
+        }
+      }
+    },
+    {
+      "id": "hospital",
+      "kuratorId": null,
+      "updatedAt": null,
+      "kind": "location",
+      "type": "district",
+      "role": "place",
+      "name": "Hospital",
+      "profile": {
+        "race": "",
+        "age": ""
+      },
+      "icon": null,
+      "tags": [],
+      "summary": "White corridors.",
+      "location": null,
+      "placeIds": [],
+      "parentId": "gate",
+      "path": [
+        "Liminal Gate"
+      ],
+      "sections": [
+        {
+          "role": "description",
+          "title": "Description",
+          "hidden": false,
+          "markdown": "White corridors.",
+          "text": "White corridors.",
+          "hash": "f86819bc298f821512eef332f135061b97ab1b2a",
+          "link": "astratera-lore://open/Sample/hospital?section=description&focus=0"
+        },
+        {
+          "role": "rumours",
+          "title": "Rumours",
+          "hidden": false,
+          "markdown": "- The lights never go out.",
+          "text": "• The lights never go out.",
+          "hash": "6ff31688c3e66ee634e60bcdf2a663bfa7a70cc7",
+          "link": "astratera-lore://open/Sample/hospital?section=rumours&focus=0"
+        }
+      ],
+      "body": {
+        "markdown": "**[Doctor](kodex:doctor)** – Tired night-shift doctor.\n\n**[Patient Room](kodex:room)** – A bed and a window.",
+        "text": "Doctor – Tired night-shift doctor.\n\nPatient Room – A bed and a window."
+      },
+      "quotes": [],
+      "toggles": [
+        {
+          "key": "t_the-basement",
+          "title": "The basement",
+          "container": "page",
+          "markdown": "Locked since the fire.\n\n- Scratching at night.",
+          "text": "Locked since the fire.\n\n• Scratching at night."
+        }
+      ],
+      "statblock": null,
+      "extraStatblocks": [],
+      "props": [],
+      "cover": null,
+      "images": [],
+      "image": null,
+      "mentions": [
+        {
+          "id": "doctor",
+          "name": "Doctor",
+          "inPackage": true
+        },
+        {
+          "id": "room",
+          "name": "Patient Room",
+          "inPackage": true
+        }
+      ],
+      "links": {
+        "lore": "astratera-lore://open/Sample/hospital?focus=0"
+      },
+      "children": [
+        "room"
+      ],
+      "presentHere": [
+        "doctor"
+      ],
+      "presentHereDeep": [
+        "doctor",
+        "nurse"
+      ],
+      "targets": {
+        "summary": {
+          "markdown": "White corridors.",
+          "hash": "f86819bc298f821512eef332f135061b97ab1b2a"
+        },
+        "beat:rumours": {
+          "markdown": "- The lights never go out.",
+          "hash": "6ff31688c3e66ee634e60bcdf2a663bfa7a70cc7"
+        },
+        "beat:t_the-basement": {
+          "markdown": "Locked since the fire.\n\n- Scratching at night.",
+          "hash": "c1b516e69090ca1995e4949d182c296c05b8c7f1",
+          "title": "The basement",
+          "toggle": true
+        },
+        "description": {
+          "markdown": "White corridors.\n\n**[Doctor](kodex:doctor)** – Tired night-shift doctor.\n\n**[Patient Room](kodex:room)** – A bed and a window.",
+          "hash": "6846db258b97ed74989288fbfe39b69404c78600",
+          "combined": true
+        },
+        "presence": {
+          "value": [
+            "doctor"
+          ],
+          "hash": "7df155732118a372b40521b105741bfd30f49c23",
+          "readonly": true
+        }
+      }
+    },
+    {
+      "id": "room",
+      "kuratorId": null,
+      "updatedAt": null,
+      "kind": "location",
+      "type": "venue",
+      "role": "place",
+      "name": "Patient Room",
+      "profile": {
+        "race": "",
+        "age": ""
+      },
+      "icon": null,
+      "tags": [],
+      "summary": "A bed and a window.",
+      "location": null,
+      "placeIds": [],
+      "parentId": "hospital",
+      "path": [
+        "Liminal Gate",
+        "Hospital"
+      ],
+      "sections": [],
+      "body": {
+        "markdown": "A bed and a window.\n\n**[Doctor](kodex:doctor)** – Tired night-shift doctor.\n\n**[Nurse](kodex:nurse)** – Kind.",
+        "text": "A bed and a window.\n\nDoctor – Tired night-shift doctor.\n\nNurse – Kind."
+      },
+      "quotes": [],
+      "toggles": [],
+      "statblock": null,
+      "extraStatblocks": [],
+      "props": [],
+      "cover": null,
+      "images": [],
+      "image": null,
+      "mentions": [
+        {
+          "id": "doctor",
+          "name": "Doctor",
+          "inPackage": true
+        },
+        {
+          "id": "nurse",
+          "name": "Nurse",
+          "inPackage": true
+        }
+      ],
+      "links": {
+        "lore": "astratera-lore://open/Sample/room?focus=0"
+      },
+      "children": [],
+      "presentHere": [
+        "doctor",
+        "nurse"
+      ],
+      "presentHereDeep": [
+        "doctor",
+        "nurse"
+      ],
+      "targets": {
+        "summary": {
+          "markdown": "A bed and a window.",
+          "hash": "61db667e3c511a4fe3cecbab11ada206944d27f0"
+        },
+        "description": {
+          "markdown": "A bed and a window.\n\n**[Doctor](kodex:doctor)** – Tired night-shift doctor.\n\n**[Nurse](kodex:nurse)** – Kind.",
+          "hash": "7908a585c842c9baa4ef34cb69f3a1eefffc6a4a",
+          "combined": true
+        },
+        "presence": {
+          "value": [
+            "doctor",
+            "nurse"
+          ],
+          "hash": "8fa3bc86221c50faed33171b1d76188bd6866d71",
+          "readonly": true
+        }
+      }
+    },
+    {
+      "id": "doctor",
+      "kuratorId": null,
+      "updatedAt": null,
+      "kind": "npc",
+      "type": "npc",
+      "role": "resident",
+      "name": "Doctor",
+      "profile": {
+        "race": "",
+        "age": ""
+      },
+      "icon": null,
+      "tags": [],
+      "summary": "Tired night-shift doctor.",
+      "location": {
+        "id": "hospital",
+        "path": [
+          "Liminal Gate",
+          "Hospital"
+        ],
+        "via": "location"
+      },
+      "placeIds": [
+        "hospital"
+      ],
+      "parentId": null,
+      "presentIn": [
+        "hospital",
+        "room"
+      ],
+      "path": [
+        "Liminal Gate",
+        "Hospital"
+      ],
+      "sections": [
+        {
+          "role": "summary",
+          "title": "Summary",
+          "hidden": false,
+          "markdown": "Tired night-shift doctor.",
+          "text": "Tired night-shift doctor.",
+          "hash": "cdbafb7edb8c75bb0063c24b759f94117a81b5ce",
+          "link": "astratera-lore://open/Sample/doctor?section=summary&focus=0"
+        },
+        {
+          "role": "appearance",
+          "title": "Appearance",
+          "hidden": false,
+          "markdown": "Grey scrubs, kind eyes.",
+          "text": "Grey scrubs, kind eyes.",
+          "hash": "661f52c3d285e3666bbe71cdf3cf9f1357dd5a81",
+          "link": "astratera-lore://open/Sample/doctor?section=appearance&focus=0"
+        },
+        {
+          "role": "dialog",
+          "title": "Dialog",
+          "hidden": false,
+          "markdown": "- \"Breathe in.\"",
+          "text": "• \"Breathe in.\"",
+          "hash": "37def15e38bf2471cc3cf727cfe497e0fb2520e1",
+          "link": "astratera-lore://open/Sample/doctor?section=dialog&focus=0"
+        }
+      ],
+      "body": {
+        "markdown": "He nods slowly.",
+        "text": "He nods slowly."
+      },
+      "quotes": [
+        "\"Breathe out.\"",
+        "\"Breathe in.\""
+      ],
+      "toggles": [
+        {
+          "key": "t_ask-about-the-night-shift",
+          "title": "Ask about the night shift",
+          "container": "dialog",
+          "markdown": "He sighs.\n\n- \"Never ask.\"",
+          "text": "He sighs.\n\n• \"Never ask.\""
+        },
+        {
+          "key": "t_ask-about-the-gate",
+          "title": "Ask about the Gate",
+          "container": "page",
+          "markdown": "He avoids the question.",
+          "text": "He avoids the question."
+        }
+      ],
+      "statblock": null,
+      "extraStatblocks": [],
+      "props": [],
+      "cover": null,
+      "images": [],
+      "image": null,
+      "mentions": [],
+      "links": {
+        "lore": "astratera-lore://open/Sample/doctor?focus=0"
+      },
+      "targets": {
+        "summary": {
+          "markdown": "Tired night-shift doctor.",
+          "hash": "cdbafb7edb8c75bb0063c24b759f94117a81b5ce"
+        },
+        "profile.appearance": {
+          "markdown": "Grey scrubs, kind eyes.",
+          "hash": "661f52c3d285e3666bbe71cdf3cf9f1357dd5a81"
+        },
+        "topic:dialog": {
+          "markdown": "- \"Breathe in.\"\n- \"Breathe out.\"",
+          "hash": "0d8a5ca6b55de3ca9d9cd3a6e4d9724a2391afcf"
+        },
+        "topic:t_ask-about-the-night-shift": {
+          "markdown": "He sighs.\n\n- \"Never ask.\"",
+          "hash": "a1629e46486ad76b3d50fc781b6201cc0200d643",
+          "title": "Ask about the night shift",
+          "toggle": true
+        },
+        "topic:t_ask-about-the-gate": {
+          "markdown": "He avoids the question.",
+          "hash": "c9bed64288dc8bf01146ceba3781bafdd9d45573",
+          "title": "Ask about the Gate",
+          "toggle": true
+        },
+        "note:body": {
+          "markdown": "He nods slowly.",
+          "hash": "c9a49c94197794870f6314f067e29019db6fa737",
+          "readonly": true
+        }
+      }
+    },
+    {
+      "id": "nurse",
+      "kuratorId": null,
+      "updatedAt": null,
+      "kind": "npc",
+      "type": "npc",
+      "role": "resident",
+      "name": "Nurse",
+      "profile": {
+        "race": "",
+        "age": ""
+      },
+      "icon": null,
+      "tags": [],
+      "summary": "Kind.",
+      "location": {
+        "id": "room",
+        "path": [
+          "Liminal Gate",
+          "Hospital",
+          "Patient Room"
+        ],
+        "via": "location"
+      },
+      "placeIds": [
+        "room"
+      ],
+      "parentId": null,
+      "presentIn": [
+        "room"
+      ],
+      "path": [
+        "Liminal Gate",
+        "Hospital",
+        "Patient Room"
+      ],
+      "sections": [
+        {
+          "role": "summary",
+          "title": "Summary",
+          "hidden": false,
+          "markdown": "Kind.",
+          "text": "Kind.",
+          "hash": "5fad662572daf6d434c38e61445393dd1f4999c3",
+          "link": "astratera-lore://open/Sample/nurse?section=summary&focus=0"
+        }
+      ],
+      "body": {
+        "markdown": "",
+        "text": ""
+      },
+      "quotes": [
+        "„Alles wird gut.“"
+      ],
+      "toggles": [],
+      "statblock": null,
+      "extraStatblocks": [],
+      "props": [],
+      "cover": null,
+      "images": [],
+      "image": null,
+      "mentions": [],
+      "links": {
+        "lore": "astratera-lore://open/Sample/nurse?focus=0"
+      },
+      "targets": {
+        "summary": {
+          "markdown": "Kind.",
+          "hash": "5fad662572daf6d434c38e61445393dd1f4999c3"
+        },
+        "topic:dialog": {
+          "markdown": "- „Alles wird gut.“",
+          "hash": "851da87a40b5c9dea3c53c5f71fd938d1a371d00"
+        }
+      }
+    }
+  ],
+  "assets": [],
+  "warnings": []
+}

@@ -8,7 +8,7 @@ const path = require('path');
 // Called directly from main.js on every launch, not just via an npm
 // lifecycle hook, so this can never silently fail to happen regardless of
 // how the app is started.
-const SOURCE_FILES = ['constants.js', 'dataModel.js', 'conditions.js', 'quests.js', 'query.js', 'imageCrop.js', 'notionImport.js', 'characterCard.js', 'transfer.js', 'graph.js'];
+const SOURCE_FILES = ['constants.js', 'encounters.js', 'dataModel.js', 'conditions.js', 'quests.js', 'query.js', 'imageCrop.js', 'notionImport.js', 'characterCard.js', 'transfer.js', 'kodexSync.js', 'graph.js'];
 const BUNDLE_NAME = 'vendor-bundle.js';
 
 function buildSharedBundle(baseDir) {

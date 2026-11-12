@@ -97,12 +97,14 @@ function normalizeCampaign(campaign) {
     // A malformed character card (hand-edited file, older shape) is repaired
     // rather than left to break the renderer; absent cards stay absent.
     if (e.characterCard) e.characterCard = CharacterCard.sanitizeCard(e.characterCard);
+    if ('profile' in e) { const pr = CharacterCard.sanitizeProfile(e.profile, e.type); if (Object.keys(pr).length) e.profile = pr; else delete e.profile; }
     // Every NPC carries its own stat block. Older NPCs get the default
     // Villager (the 2024 Commoner) here on load; one that already has a block
     // is never touched.
     if (e.type === 'npc') CharacterCard.ensureStatblock(e);
   });
   require('./quests').sanitize(campaign);
+  require('./encounters').sanitize(campaign);
   backfillBlockOrder(campaign);
   // Runs on every load, but only ever does real work once — see its own
   // idempotency guard. This is the flip: existing notes/topics/beats/

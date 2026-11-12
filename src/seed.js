@@ -28,6 +28,8 @@ function buildSeedCampaign() {
     name: 'Grey man',
     summary: 'Former signal corps engineer. Left hand replaced with a salvaged manipulator arm. Deeply distrustful of Concord officials.'
   });
+  // Profile: race / age / visual description / history, shown at the top of the NPC in Play.
+  greyMan.profile = { race: 'Human (augmented)', age: 'Mid-fifties', appearance: 'Tall and stooped, grey coat to the ankles. A salvaged manipulator arm where the left hand should be.', history: 'Served in the signal corps until the tether came down; has collected on debts since.' };
   const sailor = createEntity(c, {
     type: 'npc',
     name: 'Old sailor',
@@ -164,6 +166,14 @@ function buildSeedCampaign() {
     const m = c.contentModules.find((x) => x.name === name);
     if (m) Quests.assign(c, m.id, debtQuest.id);
   });
+  // Rewards: shown in Play wherever a reward marker sits (Ctrl+Q in a quest block). The second one is tied to a DC check
+  // (Play shows the check first); only rewards marked for the website are exported.
+  const r1 = Quests.addReward(debtQuest, 'A purse of 50 gp');
+  r1.publish = true;
+  const r2 = Quests.addReward(debtQuest, 'the grey man\'s favour');
+  r2.joiner = 'or'; r2.publish = true;
+  const settleMod = c.contentModules.find((x) => x.name === 'Settling the debt');
+  if (settleMod && settleMod.lines && settleMod.lines.length) settleMod.lines[settleMod.lines.length - 1].text += ` [[REWARD:${debtQuest.id}]]`;
 
   return c;
 }

@@ -217,5 +217,19 @@ test('a skill can carry a custom bonus that replaces the calculated one', () => 
   assert.ok(!CC.isDefaultStatblock({ characterCard: { statblock: sb2 } }), 'an override counts as customised');
 });
 
+
+test('profile: race/age/appearance/history, npc has four, location two; empty fields vanish', () => {
+  const CC = require('../src/characterCard');
+  const npc = { type: 'npc' }; const loc = { type: 'location' };
+  assert.deepStrictEqual(CC.profileFieldsFor('npc').map((f) => f.key), ['race', 'age', 'appearance', 'history']);
+  assert.deepStrictEqual(CC.profileFieldsFor('location').map((f) => f.key), ['appearance', 'history']);
+  assert.ok(CC.setProfileField(npc, 'race', 'Orc')); assert.ok(CC.setProfileField(npc, 'history', 'Born in the slums'));
+  assert.deepStrictEqual(CC.profileOf(npc).map((f) => [f.key, f.text]), [['race', 'Orc'], ['history', 'Born in the slums']]);
+  assert.strictEqual(CC.setProfileField(loc, 'race', 'x'), false, 'a location has no race');
+  CC.setProfileField(npc, 'race', '  '); CC.setProfileField(npc, 'history', '');
+  assert.ok(!('profile' in npc), 'an empty profile is not stored');
+  assert.deepStrictEqual(CC.sanitizeProfile({ race: 'A', age: '', appearance: 5, bogus: 'x' }, 'npc'), { race: 'A' });
+});
+
 if (failures) { console.log(`${failures} failed`); process.exit(1); }
 console.log('All character card tests passed.');

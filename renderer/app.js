@@ -57,6 +57,8 @@ let ui = {
   campaignSwitcherOpen: false,
   newCampaignFormOpen: false,
   renamingCampaignId: null,
+  duplicatingCampaignId: null,
+  cpDelete: null,
   confirmDeleteId: null,
   lastSceneSpeaker: null,
   pasteReview: null,
@@ -75,6 +77,13 @@ function icon(name) {
     voice: '<path d="M4 5h16v10H9l-4 4v-4H4z"/><path d="M8 9h8M8 12h5"/>',
     persona: '<circle cx="12" cy="12" r="9"/><path d="M8 14c1 1.6 2.4 2.4 4 2.4s3-.8 4-2.4"/><circle cx="9" cy="10" r="1"/><circle cx="15" cy="10" r="1"/>',
     statblock: '<path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6z"/><path d="M9 12l2 2 4-4"/>',
+    download: '<path d="M12 4v11M7 11l5 5 5-5M5 20h14"/>',
+    upload: '<path d="M12 16V5M7 9l5-5 5 5M5 20h14"/>',
+    copy: '<rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V6a2 2 0 0 1 2-2h8"/>',
+    race: '<circle cx="9" cy="8" r="3"/><path d="M3 20c.5-4 3-6 6-6s5.5 2 6 6"/><circle cx="17" cy="9" r="2.4"/><path d="M16 14.3c2.6.2 4.5 2 5 5.7"/>',
+    age: '<path d="M6 3h12M6 21h12M7 3v3.5c0 2 2 3.2 5 5.5-3 2.3-5 3.5-5 5.5V21M17 3v3.5c0 2-2 3.2-5 5.5 3 2.3 5 3.5 5 5.5V21"/>',
+    appearance: '<path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>',
+    history: '<path d="M5 4h11a3 3 0 0 1 3 3v12a1 1 0 0 1-1 1H8a3 3 0 0 1-3-3z"/><path d="M5 17a3 3 0 0 1 3-3h11M9 8h6"/>',
     pin: '<path d="M12 17v5M9 3h6l-1 6 3 3v2H7v-2l3-3-1-6z"/>',
     idcard: '<rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="11" r="2"/><path d="M14 10h4M14 14h4M6 16c.6-1.6 4.4-1.6 5 0"/>',
     chevronDown: '<path d="M6 9l6 6 6-6"/>',
@@ -86,6 +95,8 @@ function icon(name) {
     user: '<circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 4-6 8-6s8 2 8 6"/>',
     flag: '<path d="M5 21V4M5 4h11l-2 4 2 4H5"/>',
     scroll: '<path d="M8 4h10v13a3 3 0 01-3 3H6a3 3 0 003-3V6a2 2 0 00-1-2z"/><path d="M11 9h4M11 13h4"/>',
+    wagon: '<path d="M3 7h13l-1 7H4z"/><path d="M16 9h4l2 3v2h-3"/><circle cx="7.5" cy="17.5" r="2.3"/><circle cx="17" cy="17.5" r="2.3"/>',
+    dice: '<rect x="4" y="4" width="16" height="16" rx="3"/><circle cx="9" cy="9" r="1"/><circle cx="15" cy="15" r="1"/><circle cx="12" cy="12" r="1"/>',
     mapPin: '<path d="M12 21s7-6.5 7-11a7 7 0 10-14 0c0 4.5 7 11 7 11z"/><circle cx="12" cy="10" r="2.5"/>',
     search: '<circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/>',
     help: '<circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 0 1 4.7 1.2c0 1.6-2.2 1.8-2.2 3.3"/><line x1="12" y1="17" x2="12.01" y2="17"/>',
@@ -208,7 +219,7 @@ function colorFor(key) {
   return window.Constants.COLOR_PALETTE.find((c) => c.key === key) || { bg: '#242220', fg: '#ece8e0' };
 }
 
-function locations() { return Object.values(campaign.entities).filter((e) => e.type === 'location'); }
+function locations() { return Object.values(campaign.entities).filter((e) => e.type === 'location' && window.Encounters.inScope(e)); }
 function npcs() { return Object.values(campaign.entities).filter((e) => e.type === 'npc'); }
 
 // Fire-and-forget: if this entity has a Notion link set, open it in the
@@ -218,8 +229,9 @@ function npcs() { return Object.values(campaign.entities).filter((e) => e.type =
 // selection, since popping open an external app on every click while
 // rapidly editing would be more annoying than useful there.
 function maybeOpenNotion(entityId) {
+  maybeOpenKodex(entityId);
   const entity = campaign.entities[entityId];
-  if (!entity || !entity.notionUrl || !entity.notionUrl.trim()) return;
+  if (!entity || !entity.notionUrl || !entity.notionUrl.trim() || entity.notionEnabled === false) return;
   window.core.openNotionLink(toNotionScheme(entity.notionUrl)).then((result) => {
     if (!result || !result.ok) {
       console.warn('[notion] could not open link for', entity.name, '-', result && result.error);
@@ -429,6 +441,7 @@ async function init() {
     ui.activeCampaignName = activeInfo ? activeInfo.name : 'Campaign';
     await resetUiForCampaign();
     renderAll();
+    kodexInit();
   } catch (err) {
     showFatalError(err);
   }
@@ -440,6 +453,7 @@ async function init() {
 // Also refreshes the cached images base URL, since a different campaign
 // means a different images/ folder on disk.
 async function resetUiForCampaign() {
+  encResetForCampaign();
   const cps = window.Query.sortedCheckpoints(campaign);
   const locs = locations();
   ui.openEntityIds = [];
@@ -623,7 +637,8 @@ function keepScroll(fn) {
 
 function renderAll() {
   try {
-    const key = ui.mode === 'create' ? `create|${ui.createTab}` : `play|${ui.curLocation}|${ui.fullPageEntityId || ''}|${ui.curTime}`;
+    syncScope();
+    const key = (isEncScope() ? 'enc|' : '') + (ui.mode === 'create' ? `create|${ui.createTab}` : `play|${ui.curLocation}|${ui.fullPageEntityId || ''}|${ui.curTime}`);
     const same = key !== null && key === lastScrollKey;
     lastScrollKey = key;
     renderingAll = true;
@@ -658,11 +673,14 @@ function renderAllInner() {
   // Conditional text collapses while playing and shows everything (labelled) while preparing.
   window.Conditions.syncDCChecks(campaign);
   window.Conditions.setContext({ curTimeId: ui.curTime, mode: ui.mode === 'play' ? 'play' : 'edit', open: ui.condOpen });
-  document.getElementById('tab-play').classList.toggle('active', ui.mode === 'play');
+  document.getElementById('tab-play').classList.toggle('active', ui.mode === 'play' && !ui.encMode);
   document.getElementById('tab-create').classList.toggle('active', ui.mode === 'create');
+  const wagonBtn = document.getElementById('tab-wagon');
+  wagonBtn.innerHTML = icon('wagon');
+  wagonBtn.classList.toggle('active', ui.mode === 'play' && !!ui.encMode);
   document.getElementById('play-view').style.display = ui.mode === 'play' ? 'block' : 'none';
   document.getElementById('create-view').style.display = ui.mode === 'create' ? 'block' : 'none';
-  document.getElementById('selectors').style.display = ui.mode === 'play' ? 'flex' : 'none';
+  document.getElementById('selectors').style.display = ui.mode === 'play' && !isEncScope() ? 'flex' : 'none';
 
   renderCampaignBar();
   document.getElementById('campaign-switcher').style.display = ui.campaignSwitcherOpen ? 'flex' : 'none';
@@ -764,6 +782,21 @@ function renderSettingsBody() {
     <p class="hint">A Notion link on an NPC or location (paste the normal https:// link, it is converted) opens in your Notion desktop app when you open that entity in Play. The default install location is used automatically; only change this if Notion lives elsewhere. If the file is not found, the system's own handler for notion:// links is tried.</p>
     <div class="form-row"><label>Notion app (optional)</label>
       <input type="text" id="settings-notion-exe" value="${esc(appSettings.notionExePath || '')}" placeholder="…\\Programs\\Notion\\Notion.exe">
+    </div>
+    <div class="section-label">Kodex</div>
+    <p class="hint">Inbox folder: the folder Kodex writes its export packages to (the same path as “Kurator inbox” in Kodex). New packages show up under Create → Kodex, ready to review. Leave empty if you only import files by hand.</p>
+    <div class="form-row"><label>Kodex inbox folder</label>
+      <div class="inline">
+        <input type="text" id="settings-kodex-inbox" value="${esc(appSettings.kodexInboxPath || '')}" placeholder="Folder Kodex drops packages into" style="flex:1">
+        <button class="icon-btn" onclick="window.app.browseSettingsFolder('settings-kodex-inbox')">Browse…</button>
+      </div>
+    </div>
+    <p class="hint">Workspace folder: where Kodex keeps its pages. Filled in automatically while Kodex runs; it lets the “Find in Kodex” picker list pages even when Kodex is closed.</p>
+    <div class="form-row"><label>Kodex workspace folder</label>
+      <div class="inline">
+        <input type="text" id="settings-kodex-dir" value="${esc(appSettings.kodexWorkspaceDir || '')}" placeholder="Filled in automatically while Kodex runs" style="flex:1">
+        <button class="icon-btn" onclick="window.app.browseSettingsFolder('settings-kodex-dir')">Browse…</button>
+      </div>
     </div>
     <div class="section-label">Artwork</div>
     <p class="hint">Artwork default folder: when a new NPC or location gets a name, images in this folder (and its subfolders) with a matching file name are offered as its image. Matching is forgiving — "Mira Selven" finds MiraSelven.png, mira-selven.jpg, Mira_Selven_02.webp…</p>
@@ -951,7 +984,7 @@ function renderTitlebarActions() {
   const helpBtn = `<button class="icon-btn" title="Keyboard shortcuts" onclick="window.app.openHelp()">${icon('help')}</button>`;
   const settingsBtn = `<button class="icon-btn" title="Settings" onclick="window.app.openSettings()">${icon('settings')}</button>`;
 
-  if (ui.mode !== 'play') { el.innerHTML = searchBtn + helpBtn + settingsBtn; return; }
+  if (ui.mode !== 'play' || isEncScope()) { el.innerHTML = searchBtn + helpBtn + settingsBtn; return; }
 
   const bm = campaign.meta.startBookmark;
   const isHere = bm && bm.locationId === ui.curLocation && bm.timeId === ui.curTime;
@@ -1048,6 +1081,8 @@ function renderPlayView() {
     return;
   }
 
+  if (isEncScope() && !ui.curLocation) { el.innerHTML = encPanelHTML(); return; }
+
   if (!ui.curLocation || !ui.curTime || locations().length === 0) {
     el.innerHTML = `<p class="empty-hint">No locations yet — switch to Create to add one.</p>`;
     return;
@@ -1060,13 +1095,15 @@ function renderPlayView() {
 
   if (locEntity) {
     html += `<div class="inline" style="margin-bottom:10px">
-      ${locEntity.notionUrl && locEntity.notionUrl.trim() ? `<button class="icon-btn" title="Open this location's Notion page" onclick="window.app.openEntity('${locEntity.id}')">${entityBadge(locEntity, 14)} ${esc(locEntity.name)} in Notion</button>` : `<span class="card-title">${entityBadge(locEntity, 14)} ${esc(locEntity.name)}</span>`}
+      ${locEntity.notionUrl && locEntity.notionUrl.trim() && locEntity.notionEnabled !== false ? `<button class="icon-btn" title="Open this location's Notion page" onclick="window.app.openEntity('${locEntity.id}')">${entityBadge(locEntity, 14)} ${esc(locEntity.name)} in Notion</button>` : `<span class="card-title">${entityBadge(locEntity, 14)} ${esc(locEntity.name)}</span>`}
+      ${locEntity.external && locEntity.external.kodex && locEntity.external.kodex.id ? `<button class="mini-btn" title="Open this location's Kodex page" onclick="window.app.openInKodex('${locEntity.id}')">Kodex</button>` : ''}
       ${entityHasInventory(locEntity) ? `<button class="mini-btn" title="Inventory" onclick="window.app.openInventoryView('${locEntity.id}')">${icon('chest')}</button>` : ''}
       <button class="mini-btn" title="Show this location in the graph, at the current milestone" onclick="window.app.showInGraph('${locEntity.id}','${ui.curTime || ''}')">${icon('graph')}</button>
     </div>`;
   }
 
   html += renderSceneLayoutButton(locEntity);
+  html += renderProfileHTML(locEntity);
 
   html += renderLocationContentHTML(view);
 
@@ -1083,7 +1120,7 @@ function renderPlayView() {
   html += `<div class="section-label">Available here</div>`;
   html += renderPresenceChipsHTML(view.present, { interactive: true });
 
-  el.innerHTML = html;
+  el.innerHTML = (isEncScope() ? encBackBarHTML() : '') + html;
 }
 
 function renderLocationContentHTML(view) {
@@ -1339,6 +1376,7 @@ function renderEntityCardHTML(entityId) {
     </div>`;
 
   html += renderSceneLayoutButton(entity);
+  html += renderProfileHTML(entity);
   html += renderRoleplayStripHTML(entity);
 
   // A location opened from a mention or a chip shows what the location itself shows
@@ -1379,6 +1417,7 @@ function renderFullPageHTML(entityId) {
     </div>`;
 
   html += renderSceneLayoutButton(entity);
+  html += renderProfileHTML(entity);
   html += renderRoleplayStripHTML(entity);
 
   let locPresent = null;
@@ -1407,13 +1446,22 @@ function renderFullPageHTML(entityId) {
 
 function renderCreateView() {
   const el = document.getElementById('create-view');
-  el.innerHTML = `
+  el.innerHTML = isEncScope() ? `
+    <div class="create-tabs">
+      <button id="ct-back" onclick="window.app.setCreateScope('campaign')">${icon('arrowLeft')} Campaign</button>
+      <button id="ct-entities" class="${ui.createTab === 'entities' ? 'active' : ''}" onclick="window.app.setCreateTab('entities')">${icon('wagon')} Encounter library</button>
+      <button id="ct-content" class="${ui.createTab === 'content' ? 'active' : ''}" onclick="window.app.setCreateTab('content')">Encounter content</button>
+      <button id="ct-collections" class="${ui.createTab === 'collections' ? 'active' : ''}" onclick="window.app.setCreateTab('collections')">Collections</button>
+    </div>
+    <div id="create-body" style="padding:12px"></div>
+  ` : `
     <div class="create-tabs">
       <button id="ct-entities" class="${ui.createTab === 'entities' ? 'active' : ''}" onclick="window.app.setCreateTab('entities')">Entities</button>
       <button id="ct-content" class="${ui.createTab === 'content' ? 'active' : ''}" onclick="window.app.setCreateTab('content')">Scenes &amp; places</button>
       <button id="ct-library" class="${ui.createTab === 'library' ? 'active' : ''}" onclick="window.app.setCreateTab('library')">Library</button>
       <button id="ct-graph" class="${ui.createTab === 'graph' ? 'active' : ''}" onclick="window.app.setCreateTab('graph')">Graph</button>
       <button id="ct-conditions" class="${ui.createTab === 'conditions' ? 'active' : ''}" onclick="window.app.setCreateTab('conditions')">Conditions</button>
+      <button id="ct-encounters" onclick="window.app.setCreateScope('encounter')">${icon('wagon')} Encounters</button>
     </div>
     <div id="create-body" style="padding:12px"></div>
   `;
@@ -1421,6 +1469,7 @@ function renderCreateView() {
   else if (ui.createTab === 'content') renderCreateContent();
   else if (ui.createTab === 'graph') renderGraphTab();
   else if (ui.createTab === 'conditions') renderConditionsTab();
+  else if (ui.createTab === 'collections') renderEncCollections();
   else renderContentLibrary();
 }
 
@@ -1435,17 +1484,18 @@ function renderCreateEntitiesInner() {
   const groups = (campaign.entityGroups || []).slice().sort((a, b) => a.order - b.order);
 
   let html = `
-    <input type="text" id="entity-search" placeholder="Search entities by name or summary…" value="${esc(ui.entitySearchQuery || '')}" oninput="window.app.onEntitySearchInput(this.value)" style="margin-bottom:10px">
+    <input type="text" id="entity-search" placeholder="${isEncScope() ? 'Search encounters…' : 'Search entities by name or summary…'}" value="${esc(ui.entitySearchQuery || '')}" oninput="window.app.onEntitySearchInput(this.value)" style="margin-bottom:10px">
     <div class="inline" style="margin-bottom:10px;flex-wrap:wrap">
-      <button class="icon-btn" onclick="window.app.toggleGroupManager()">${icon('clock')} ${ui.groupManagerOpen ? 'Hide' : 'Manage'} groups</button>
+      ${isEncScope() ? '' : `<button class="icon-btn" onclick="window.app.toggleGroupManager()">${icon('clock')} ${ui.groupManagerOpen ? 'Hide' : 'Manage'} groups</button>
       <button class="icon-btn" onclick="window.app.toggleBulkAdd()">${icon('plus')} ${ui.bulkAddOpen ? 'Hide' : 'Bulk add'}</button>
-      <button class="icon-btn" onclick="window.app.openNotionImport()">${icon('plus')} Import content</button>
-      <button class="icon-btn" onclick="window.app.openTransfer()">${icon('chevronRight')} Transfer to other campaign</button>
+      <button class="icon-btn" onclick="window.app.openNotionImport()">${icon('plus')} Import content</button>`}
+      <button class="icon-btn" id="kodex-open-btn" onclick="window.app.openKodex()">${kodexButtonInner()}</button>
+      ${isEncScope() ? '' : `<button class="icon-btn" onclick="window.app.openTransfer()">${icon('chevronRight')} Transfer to other campaign</button>`}
     </div>
     ${ui.groupManagerOpen ? renderGroupManagerHTML(groups) : ''}
     ${ui.bulkAddOpen ? renderBulkAddHTML(groups) : ''}
     <div id="entity-list-container"></div>
-    <button class="icon-btn" onclick="window.app.newEntityForm()">${icon('plus')} ${ui.newEntityDraft && ui.createSelectedEntityId !== 'new' ? 'Continue new entity' : 'New entity'}</button>
+    <button class="icon-btn" onclick="window.app.newEntityForm()">${icon('plus')} ${ui.newEntityDraft && ui.createSelectedEntityId !== 'new' ? (isEncScope() ? 'Continue new encounter' : 'Continue new entity') : (isEncScope() ? 'New encounter' : 'New entity')}</button>
     <div class="divider"></div>
     <div id="entity-editor"></div>
   `;
@@ -1495,11 +1545,11 @@ function renderEntityListOnly() {
   if (ui.groupManagerOpen) { renderManageList(); return; }
 
   const query = (ui.entitySearchQuery || '').toLowerCase();
-  const allList = Object.values(campaign.entities);
+  const allList = Object.values(campaign.entities).filter(window.Encounters.inScope);
   const list = query
     ? allList.filter((e) => e.name.toLowerCase().includes(query) || (e.summary || '').toLowerCase().includes(query))
     : allList;
-  const groups = (campaign.entityGroups || []).slice().sort((a, b) => a.order - b.order);
+  const groups = isEncScope() ? [] : (campaign.entityGroups || []).slice().sort((a, b) => a.order - b.order);
   const topGroups = groups.filter((g) => !g.parentId);
   const validGroupIds = new Set(groups.map((g) => g.id));
 
@@ -1514,7 +1564,7 @@ function renderEntityListOnly() {
     html += ungrouped.map((e) => renderEntityRowHTML(e, 0)).join('');
   }
   if (list.length === 0) {
-    html += `<p class="empty-hint">${query ? 'No entities match your search.' : 'No entities yet.'}</p>`;
+    html += `<p class="empty-hint">${query ? 'No entities match your search.' : (isEncScope() ? 'No encounters yet. Create one below or import a collection from Kodex.' : 'No entities yet.')}</p>`;
   }
   html += `</div>`;
   container.innerHTML = html;
@@ -1596,7 +1646,7 @@ const MG_LEVELS = 6; // distinct colors before they repeat; see .mg-level-N in s
 
 function mgVisibleEntities() {
   const query = (ui.entitySearchQuery || '').toLowerCase();
-  const all = Object.values(campaign.entities);
+  const all = Object.values(campaign.entities).filter(window.Encounters.inScope);
   return query
     ? all.filter((e) => e.name.toLowerCase().includes(query) || (e.summary || '').toLowerCase().includes(query))
     : all;
@@ -1955,8 +2005,10 @@ function renderNewEntityForm() {
 }
 
 function startNewEntityDraft(type) {
-  const groupId = window.DataModel.getRememberedGroup(campaign, type);
+  if (isEncScope()) type = 'location';
+  const groupId = isEncScope() ? null : window.DataModel.getRememberedGroup(campaign, type);
   const entity = window.DataModel.createDraftEntity(campaign, { type, groupId });
+  if (isEncScope()) { entity.encounter = true; entity.icon = 'wagon'; }
   ui.newEntityDraft = {
     id: entity.id,
     // Modules that already exist now are not the draft's to throw away.
@@ -2114,6 +2166,31 @@ function renderCardChipsHTML(entity) {
 
 // Always visible on an NPC's Play-mode card: the stats that matter when you
 // are talking to them, not fighting them. Click it for the full card.
+// Race, age, visual description and history: shown at the very top of an NPC (a location: visual description and
+// history), each in its own colour. Empty fields are not shown at all.
+function renderProfileEditorHTML(entity) {
+  const fields = window.CharacterCard.profileFieldsFor(entity.type);
+  if (!fields.length) return '';
+  const col = (k) => window.Constants.COLOR_PALETTE.find((c) => c.key === k) || { fg: '#b9b8b2' };
+  const cur = entity.profile || {};
+  return `<div class="form-row pf-editor"><label>Profile <span class="hint" style="font-weight:400">(shown at the top of the ${entity.type === 'npc' ? 'NPC' : 'location'} in Play; empty fields are hidden)</span></label>
+    <div class="pf-grid">${fields.map((f) => {
+      const attrs = `placeholder="${esc(f.placeholder)}" oninput="window.app.onProfileInput('${entity.id}','${f.key}',this.value)"`;
+      return `<div class="pf-field${f.short ? ' short' : ''}"><label style="color:${col(f.color).fg}">${icon(f.key)} ${esc(f.label)}</label>${f.short
+        ? `<input type="text" value="${esc(cur[f.key] || '')}" ${attrs}>`
+        : `<textarea id="pf-${entity.id}-${f.key}" class="mention-field" rows="3" ${attrs}>${esc(cur[f.key] || '')}</textarea>`}</div>`;
+    }).join('')}</div></div>`;
+}
+
+function renderProfileHTML(entity) {
+  const fields = window.CharacterCard.profileOf(entity);
+  if (!fields.length) return '';
+  const col = (k) => window.Constants.COLOR_PALETTE.find((c) => c.key === k) || { bg: '#2a2a28', fg: '#b9b8b2' };
+  const chips = fields.filter((f) => f.short).map((f) => { const c = col(f.color); return `<span class="pf-chip" style="background:${c.bg};color:${c.fg}" title="${esc(f.label)}">${icon(f.key)} <span class="pf-k">${esc(f.label)}</span> <b>${esc(f.text)}</b></span>`; }).join('');
+  const blocks = fields.filter((f) => !f.short).map((f) => { const c = col(f.color); return `<div class="pf-block" style="border-left-color:${c.fg}"><div class="pf-h" style="color:${c.fg}">${icon(f.key)} ${esc(f.label)}</div><div class="pf-text">${rich(f.text)}</div></div>`; }).join('');
+  return `<div class="pf-wrap">${chips ? `<div class="pf-chips">${chips}</div>` : ''}${blocks}</div>`;
+}
+
 function renderRoleplayStripHTML(entity) {
   if (!entity || entity.type !== 'npc') return '';
   const rp = window.CharacterCard.roleplay(entity);
@@ -2543,10 +2620,10 @@ function renderEntityEditor(entityId) {
   let html = `
     <div class="card">
       <div class="card-head">
-        <span class="card-title">${entityBadge(entity, 22)} <span id="ee-title">${esc(entity.name) || (draft ? `New ${entity.type === 'location' ? 'location' : entity.type === 'quest' ? 'quest' : 'NPC'}` : '')}</span></span>
-        ${draft ? draftButtons : `<span class="inline"><button class="mini-btn" title="Show in the graph" onclick="window.app.showInGraph('${entity.id}')">${icon('graph')}</button><button class="mini-btn" title="Delete entity" onclick="window.app.deleteEntity('${entity.id}')">${icon('trash')}</button></span>`}
+        <span class="card-title">${entityBadge(entity, 22)} <span id="ee-title">${esc(entity.name) || (draft ? `New ${window.Encounters.isEncounter(entity) ? 'encounter' : entity.type === 'location' ? 'location' : entity.type === 'quest' ? 'quest' : 'NPC'}` : '')}</span></span>
+        ${draft ? draftButtons : `<span class="inline">${entity.type === 'quest' ? '' : `<button class="mini-btn" style="white-space:nowrap;width:auto;padding:0 8px;gap:4px" title="Send this entity to Kodex" onclick="window.app.kxSendEntity('${entity.id}')">${icon('upload')} Send to Kodex</button>`}<button class="mini-btn" title="Show in the graph" onclick="window.app.showInGraph('${entity.id}')">${icon('graph')}</button><button class="mini-btn" title="Delete entity" onclick="window.app.deleteEntity('${entity.id}')">${icon('trash')}</button></span>`}
       </div>
-      ${draft ? `<div class="form-row"><label>Type</label>
+      ${draft && !window.Encounters.isEncounter(entity) ? `<div class="form-row"><label>Type</label>
         <select onchange="window.app.setDraftType(this.value)">
           <option value="npc" ${entity.type === 'npc' ? 'selected' : ''}>NPC</option>
           <option value="location" ${entity.type === 'location' ? 'selected' : ''}>Location</option>
@@ -2554,8 +2631,10 @@ function renderEntityEditor(entityId) {
         </select>
       </div>` : ''}
       <div class="form-row"><label>Name</label><input type="text" id="ee-name" value="${esc(entity.name)}" ${draft ? 'placeholder="Required"' : ''} oninput="window.app.onEntityFieldInput('${entity.id}','name',this.value)" onchange="window.app.offerArtwork('${entity.id}',false)"></div>
-      <div class="form-row"><label>Summary <span class="hint" style="font-weight:400">(not shown in Play, only used for searching here and as a hover preview when an entity has no general notes)</span></label><textarea id="ee-summary" oninput="window.app.onEntityFieldInput('${entity.id}','summary',this.value)">${esc(entity.summary)}</textarea></div>
-      <div class="form-row"><label>Notion link</label><input type="text" value="${esc(entity.notionUrl)}" oninput="window.app.onEntityFieldInput('${entity.id}','notionUrl',this.value)"></div>
+      <div class="form-row"><label>Summary <span class="hint" style="font-weight:400">(${entity.type === 'quest' ? 'not shown in Play; it becomes the quest description in the website export' : 'not shown in Play, only used for searching here and as a hover preview when an entity has no general notes'})</span></label><textarea id="ee-summary" oninput="window.app.onEntityFieldInput('${entity.id}','summary',this.value)">${esc(entity.summary)}</textarea></div>
+      ${renderProfileEditorHTML(entity)}
+      <div class="form-row"><label>Notion link</label><div class="inline"><label class="hint" style="display:flex;align-items:center;gap:5px;margin:0" title="Open this Notion page automatically in Play. Turn off to keep the link without opening it."><input type="checkbox" ${entity.notionEnabled === false ? '' : 'checked'} onchange="window.app.setEntityFlag('${entity.id}','notionEnabled',this.checked)"> Open in Play</label><input type="text" style="flex:1" value="${esc(entity.notionUrl)}" oninput="window.app.onEntityFieldInput('${entity.id}','notionUrl',this.value)"></div></div>
+      ${kodexEntityRowHTML(entity)}
       <div class="form-row"><label>Group</label>
         <select onchange="window.app.updateEntityGroup('${entity.id}',this.value)">
           <option value="">Ungrouped</option>
@@ -2666,14 +2745,42 @@ function renderEntityEditor(entityId) {
 // built.
 function renderCheckpointManagerHTML(cps) {
   return `<div style="margin-top:8px">
-    ${cps.map((c, idx) => `
-      <div class="campaign-row">
-        <input type="text" value="${esc(c.label)}" style="flex:1" oninput="window.app.onCheckpointLabelInput('${c.id}',this.value)">
+    ${cps.map((c, idx) => {
+      if (ui.cpDelete && ui.cpDelete.id === c.id) return checkpointDeleteHTML(c, cps);
+      return `<div class="campaign-row">
+        <input type="text" value="${esc(c.label)}" style="flex:1" title="Rename" oninput="window.app.onCheckpointLabelInput('${c.id}',this.value)">
         <div class="campaign-actions">
           <button class="mini-btn" title="Move earlier" ${idx === 0 ? 'disabled' : ''} onclick="window.app.moveCheckpointUI('${c.id}',-1)">${icon('chevronUp')}</button>
           <button class="mini-btn" title="Move later" ${idx === cps.length - 1 ? 'disabled' : ''} onclick="window.app.moveCheckpointUI('${c.id}',1)">${icon('chevronDown')}</button>
+          <button class="mini-btn" title="${cps.length < 2 ? 'The last milestone cannot be deleted' : 'Delete this milestone…'}" ${cps.length < 2 ? 'disabled' : ''} onclick="window.app.startDeleteCheckpoint('${c.id}')">${icon('trash')}</button>
         </div>
-      </div>`).join('')}
+      </div>`;
+    }).join('')}
+  </div>`;
+}
+
+// The delete panel for one milestone. Nothing happens until "Delete milestone" is pressed.
+function checkpointDeleteHTML(cp, cps) {
+  const d = ui.cpDelete;
+  const u = window.DataModel.checkpointUsage(campaign, cp.id);
+  const others = cps.filter((c) => c.id !== cp.id);
+  const bits = [];
+  if (u.placements) bits.push(`${u.placements} placed item${u.placements === 1 ? '' : 's'} (notes, topics, sections, scenes, descriptions)`);
+  if (u.presenceLists) bits.push(`${u.presenceLists} “Present here” list${u.presenceLists === 1 ? '' : 's'}`);
+  if (u.conditions.length) bits.push(`milestone condition${u.conditions.length === 1 ? '' : 's'}: ${u.conditions.map(esc).join(', ')}`);
+  if (u.links) bits.push(`${u.links} link${u.links === 1 ? '' : 's'} that point at this milestone`);
+  if (u.start) bits.push('the start point');
+  const usedText = bits.length ? `<b>${esc(cp.label)}</b> is used by: ${bits.join('; ')}.` : `<b>${esc(cp.label)}</b> is not used by anything.`;
+  const needsChoice = u.total > 0;
+  const modeUI = needsChoice ? `
+    <label class="cp-opt"><input type="radio" name="cp-del-mode" ${d.mode === 'move' ? 'checked' : ''} onchange="window.app.cpDeleteMode('move')"> Move everything to
+      <select onchange="window.app.cpDeleteTarget(this.value)" ${d.mode !== 'move' ? 'disabled' : ''}>${others.map((c) => `<option value="${c.id}" ${d.target === c.id ? 'selected' : ''}>${esc(c.label)}</option>`).join('')}</select></label>
+    <label class="cp-opt danger"><input type="radio" name="cp-del-mode" ${d.mode === 'content' ? 'checked' : ''} onchange="window.app.cpDeleteMode('content')"> Delete the content placed here too <span class="cond-hint">(items that are also placed somewhere else are kept)</span></label>` : '';
+  const warn = d.mode === 'content' && needsChoice ? `<div class="cond-hint" style="color:#e07a7a">This removes ${u.placements} placed item${u.placements === 1 ? '' : 's'} for good. It cannot be undone (apart from the automatic backups).</div>` : '';
+  return `<div class="cp-delete">
+    <div>${usedText}</div>${modeUI}${warn}
+    <div class="inline"><button class="icon-btn ${d.mode === 'content' ? 'danger' : ''}" onclick="window.app.confirmDeleteCheckpoint()">${icon('trash')} Delete milestone</button>
+      <button class="icon-btn" onclick="window.app.cancelDeleteCheckpoint()">${icon('x')} Cancel</button></div>
   </div>`;
 }
 
@@ -2703,7 +2810,7 @@ function renderCreateContent() {
   const cps = window.Query.sortedCheckpoints(campaign);
 
   if (locs.length === 0) {
-    body.innerHTML = `<p class="empty-hint">Add a location under the Entities tab first.</p>`;
+    body.innerHTML = `<p class="empty-hint">${isEncScope() ? 'Add an encounter under Encounter library first.' : 'Add a location under the Entities tab first.'}</p>`;
     return;
   }
 
@@ -2711,12 +2818,12 @@ function renderCreateContent() {
   if (!ui.createContentTimeId && cps.length > 0) ui.createContentTimeId = cps[0].id;
 
   let html = `
-    <p class="hint">Prepare what happens at <b>one location at one milestone</b>: its description, who is present, trackable sections and scenes. A location's own notes and topics live in the Entities tab.</p>
-    <div class="form-row"><label>Location</label>
+    ${isEncScope() ? `<p class="hint">Prepare <b>one encounter</b>: its description, who is present (pick NPCs and places from the general library), trackable sections and scenes.</p>` : `<p class="hint">Prepare what happens at <b>one location at one milestone</b>: its description, who is present, trackable sections and scenes. A location's own notes and topics live in the Entities tab.</p>`}
+    <div class="form-row"><label>${isEncScope() ? 'Encounter' : 'Location'}</label>
       <input type="text" id="cc-loc-search" placeholder="Search locations… (↑ ↓ to move, Enter to open)" autocomplete="off" value="${esc(ui.locSearch || '')}" style="margin-bottom:6px">
       <div class="presence-list loc-list" id="cc-loc-list">${locListHTML(locs)}</div>
     </div>
-    <div class="form-row"><label>Time</label>
+    ${isEncScope() ? '' : `<div class="form-row"><label>Time</label>
       <div class="inline">
         <select id="cc-time">${cps.map((c) => `<option value="${c.id}" ${c.id === ui.createContentTimeId ? 'selected' : ''}>${esc(c.label)}</option>`).join('')}</select>
         ${ui.addingCheckpoint
@@ -2727,7 +2834,7 @@ function renderCreateContent() {
       </div>
       <button class="icon-btn" style="margin-top:6px;align-self:flex-start" onclick="window.app.toggleCheckpointManager()">${icon('clock')} ${ui.checkpointManagerOpen ? 'Hide' : 'Manage'} checkpoint order</button>
       ${ui.checkpointManagerOpen ? renderCheckpointManagerHTML(cps) : ''}
-    </div>
+    </div>`}
     <div class="divider"></div>
     <div id="content-editor"></div>
   `;
@@ -2740,7 +2847,7 @@ function renderCreateContent() {
     const hl = list.querySelector('.hl');
     if (hl) hl.scrollIntoView({ block: 'nearest' });
   };
-  window.app.pickContentLocation = (id) => { ui.createContentLocationId = id; campaign.meta.lastContentLocationId = id; scheduleFieldSave('content-location'); ui.locSearch = ''; ui.locHighlight = null; ui.pasteReview = null; renderCreateContent(); };
+  window.app.pickContentLocation = (id) => { ui.createContentLocationId = id; if (!isEncScope()) { campaign.meta.lastContentLocationId = id; scheduleFieldSave('content-location'); } ui.locSearch = ''; ui.locHighlight = null; ui.pasteReview = null; renderCreateContent(); };
   locSearch.oninput = () => { ui.locSearch = locSearch.value; ui.locHighlight = null; redrawLocList(); };
   locSearch.onkeydown = (e) => {
     const matches = locMatches(locs);
@@ -2759,7 +2866,7 @@ function renderCreateContent() {
     }
   };
   redrawLocList();
-  document.getElementById('cc-time').onchange = (e) => { ui.createContentTimeId = e.target.value; campaign.meta.lastContentTimeId = e.target.value; scheduleFieldSave('content-location'); ui.pasteReview = null; renderCreateContent(); };
+  if (document.getElementById('cc-time')) document.getElementById('cc-time').onchange = (e) => { ui.createContentTimeId = e.target.value; campaign.meta.lastContentTimeId = e.target.value; scheduleFieldSave('content-location'); ui.pasteReview = null; renderCreateContent(); };
 
   renderContentEditor();
   restoreContentField();
@@ -3015,7 +3122,7 @@ function renderContentEditor() {
     (b) => b.kind === 'arrival' && b.locationId === ui.createContentLocationId && b.timeId === ui.createContentTimeId
   );
 
-  const allEntities = Object.values(campaign.entities);
+  const allEntities = Object.values(campaign.entities).filter(notEnc);
   const npcsList = allEntities.filter((e) => e.type === 'npc');
   const beatsHere = window.Query.getAssignedContent(campaign, ui.createContentLocationId, 'beat')
     .filter((b) => b.timeId === ui.createContentTimeId)
@@ -3182,7 +3289,7 @@ function buildLibraryGroups(modules) {
 function renderContentLibrary() {
   const body = document.getElementById('create-body');
   const filters = campaign.meta.contentLibraryFilters;
-  const allEntities = Object.values(campaign.entities).sort((a, b) => a.name.localeCompare(b.name));
+  const allEntities = Object.values(campaign.entities).filter(notEnc).sort((a, b) => a.name.localeCompare(b.name));
   const typeLabels = window.Constants.MODULE_TYPE_LABELS;
 
   // The search input gets its own container, never rebuilt by
@@ -3374,7 +3481,7 @@ function renderLibraryModuleEditorHTML(module) {
   const npcsList = Object.values(campaign.entities).filter((e) => e.type === 'npc');
   const assignments = window.Query.getModuleAssignments(campaign, module.id);
   const compatibleTypes = window.Constants.MODULE_TYPE_ENTITY_TYPES[module.type] || [];
-  const compatibleEntities = Object.values(campaign.entities).filter((e) => compatibleTypes.includes(e.type));
+  const compatibleEntities = Object.values(campaign.entities).filter((e) => compatibleTypes.includes(e.type) && !(window.Encounters.isEncounter(e) && !isEncScope()));
   const allowsNoTime = module.type === 'note' || module.type === 'topic';
 
   let html = `<div class="card" style="margin:6px 0 12px">
@@ -3453,7 +3560,7 @@ function libraryAssignEffectiveTimeId(module, cps) {
 // this content at exactly the time-scope currently chosen.
 function computeLibraryAssignView(module) {
   const compatibleTypes = window.Constants.MODULE_TYPE_ENTITY_TYPES[module.type] || [];
-  const compatibleEntities = Object.values(campaign.entities).filter((e) => compatibleTypes.includes(e.type));
+  const compatibleEntities = Object.values(campaign.entities).filter((e) => compatibleTypes.includes(e.type) && !(window.Encounters.isEncounter(e) && !isEncScope()));
   const cps = window.Query.sortedCheckpoints(campaign);
   const allowsNoTime = module.type === 'note' || module.type === 'topic';
   const timeId = libraryAssignEffectiveTimeId(module, cps);
@@ -4393,7 +4500,7 @@ function gatherJumpLinkItems() {
   // here. Picking one of these opens a second step to optionally anchor
   // the link to a specific milestone; sections/topics/scenes/descriptions
   // skip that, since they already carry their own time context.
-  Object.values(campaign.entities).forEach((e) => {
+  Object.values(campaign.entities).filter(notEnc).forEach((e) => {
     if (e.type === 'npc') {
       items.push({ id: e.id, kind: 'npc', label: e.name, sourceLabel: 'NPC' });
     } else if (e.type === 'location') {
@@ -4469,7 +4576,7 @@ function renderMentionSuggest(ta) {
     matches = mentionState.allItems.filter((it) => it.label.toLowerCase().includes(q) || (it.sourceLabel || '').toLowerCase().includes(q)).slice(0, 50);
   } else {
     const q = mentionState.query.toLowerCase();
-    let pool = Object.values(campaign.entities);
+    let pool = Object.values(campaign.entities).filter(notEnc);
     pool = pool.filter((e) => e.type !== 'quest');
     if (mentionState.mode === 'say') pool = pool.filter((e) => e.type === 'npc');
     matches = pool.filter((e) => e.name.toLowerCase().includes(q)).slice(0, 6);
@@ -5090,6 +5197,17 @@ function renderCampaignSwitcherBody() {
       </div>`;
     }
 
+    if (ui.duplicatingCampaignId === c.id) {
+      return `<div class="campaign-row ${isActive ? 'active' : ''}">
+        <input type="text" id="dup-input-${c.id}" value="${esc(c.name + ' (copy)')}" style="flex:1" title="Name of the copy"
+          onkeydown="if(event.key==='Enter'){window.app.confirmDuplicateCampaign('${c.id}')}else if(event.key==='Escape'){window.app.cancelDuplicateCampaign()}">
+        <div class="campaign-actions">
+          <button class="mini-btn" title="Create the copy" onclick="window.app.confirmDuplicateCampaign('${c.id}')">${icon('check')}</button>
+          <button class="mini-btn" onclick="window.app.cancelDuplicateCampaign()">${icon('x')}</button>
+        </div>
+      </div>`;
+    }
+
     if (ui.confirmDeleteId === c.id) {
       return `<div class="campaign-row ${isActive ? 'active' : ''}">
         <span class="confirm-row">Delete "${esc(c.name)}"? It moves to a recoverable folder, not gone for good.</span>
@@ -5105,6 +5223,7 @@ function renderCampaignSwitcherBody() {
         ${isActive ? icon('check') + ' ' : ''}${esc(c.name)}
       </span>
       <div class="campaign-actions">
+        <button class="mini-btn" title="Duplicate: make a copy of this whole campaign under a new name" onclick="window.app.startDuplicateCampaign('${c.id}')">${icon('copy')}</button>
         <button class="mini-btn" title="Rename" onclick="window.app.startRenameCampaign('${c.id}')">${icon('edit')}</button>
         <button class="mini-btn" title="Delete" onclick="window.app.startDeleteCampaign('${c.id}')">${icon('trash')}</button>
       </div>
@@ -5134,6 +5253,10 @@ function renderCampaignSwitcherBody() {
   }
   if (ui.renamingCampaignId) {
     const input = document.getElementById(`rename-input-${ui.renamingCampaignId}`);
+    if (input) { input.focus(); input.select(); }
+  }
+  if (ui.duplicatingCampaignId) {
+    const input = document.getElementById(`dup-input-${ui.duplicatingCampaignId}`);
     if (input) { input.focus(); input.select(); }
   }
 }
@@ -5320,7 +5443,33 @@ window.app = {
     await resetUiForCampaign();
     window.app.closeCampaignSwitcher();
   },
+  startDuplicateCampaign(id) {
+    ui.duplicatingCampaignId = id;
+    ui.renamingCampaignId = null;
+    ui.confirmDeleteId = null;
+    ui.newCampaignFormOpen = false;
+    renderCampaignSwitcherBody();
+  },
+  cancelDuplicateCampaign() {
+    ui.duplicatingCampaignId = null;
+    renderCampaignSwitcherBody();
+  },
+  async confirmDuplicateCampaign(id) {
+    const input = document.getElementById(`dup-input-${id}`);
+    const name = input ? input.value.trim() : '';
+    if (!name) return;
+    await persistSafely();   // the copy is made from what is on disk: save pending edits first
+    const result = await window.core.duplicateCampaign(id, name);
+    ui.duplicatingCampaignId = null;
+    if (!result) { if (window.Health) window.Health.notice('Could not duplicate that campaign.'); return; }
+    campaign = result.campaign;
+    ui.activeCampaignId = result.entry.id;
+    ui.activeCampaignName = result.entry.name;
+    await resetUiForCampaign();
+    window.app.closeCampaignSwitcher();
+  },
   startRenameCampaign(id) {
+    ui.duplicatingCampaignId = null;
     ui.renamingCampaignId = id;
     ui.confirmDeleteId = null;
     renderCampaignSwitcherBody();
@@ -5385,7 +5534,7 @@ window.app = {
   },
 
   selectTime(id) { ui.curTime = id; renderAll(); },
-  selectLocation(id) { ui.curLocation = id; ui.openEntityIds = []; renderAll(); maybeOpenNotion(id); },
+  selectLocation(id) { leaveEncounterFor(id); ui.curLocation = id; ui.openEntityIds = []; renderAll(); maybeOpenNotion(id); },
   jumpNpc(id) { ui.fullPageEntityId = id; renderAll(); maybeOpenNotion(id); },
   stepCheckpoint(direction) {
     const cps = window.Query.sortedCheckpoints(campaign);
@@ -5410,6 +5559,7 @@ window.app = {
     const beatModule = campaign.contentModules.find((m) => m.id === itemId && m.type === 'beat');
     const beatAssignment = beatModule && campaign.assignments.find((a) => a.moduleId === beatModule.id);
     if (beatAssignment) {
+      leaveEncounterFor(beatAssignment.entityId);
       ui.fullPageEntityId = null;
       ui.curLocation = beatAssignment.entityId;
       ui.curTime = beatAssignment.timeId;
@@ -5426,6 +5576,7 @@ window.app = {
     const sceneModule = campaign.contentModules.find((m) => m.id === itemId && m.type === 'scene');
     const sceneAssignment = sceneModule && campaign.assignments.find((a) => a.moduleId === sceneModule.id);
     if (sceneAssignment) {
+      leaveEncounterFor(sceneAssignment.entityId);
       ui.fullPageEntityId = null;
       ui.curLocation = sceneAssignment.entityId;
       ui.curTime = sceneAssignment.timeId;
@@ -5444,6 +5595,7 @@ window.app = {
     if (descriptionAssignment) {
       // No expand/scroll step needed — the description is always shown
       // at the top of the location card, immediately visible on arrival.
+      leaveEncounterFor(descriptionAssignment.entityId);
       ui.fullPageEntityId = null;
       ui.curLocation = descriptionAssignment.entityId;
       ui.curTime = descriptionAssignment.timeId;
@@ -6101,6 +6253,10 @@ window.app = {
   // notionUrl) — same fix as everywhere else this bug showed up. Icon and
   // color stay on updateEntityField below since those are discrete button
   // clicks, not typing, so an immediate full refresh is exactly right there.
+  onProfileInput(id, key, value) {
+    const entity = campaign.entities[id];
+    if (entity && window.CharacterCard.setProfileField(entity, key, value)) scheduleFieldSave(`entity-${id}-profile-${key}`);
+  },
   onEntityFieldInput(id, field, value) {
     const entity = campaign.entities[id];
     if (entity) entity[field] = value;
@@ -6741,7 +6897,11 @@ window.app = {
     const appFolder = document.getElementById('settings-app-folder');
     const artFolder = document.getElementById('settings-artwork-folder');
     const notionExe = document.getElementById('settings-notion-exe');
+    const kodexInbox = document.getElementById('settings-kodex-inbox');
+    const kodexDir = document.getElementById('settings-kodex-dir');
     const updated = {
+      ...(kodexDir ? { kodexWorkspaceDir: kodexDir.value.trim() } : {}),
+      ...(kodexInbox ? { kodexInboxPath: kodexInbox.value.trim() } : {}),
       ...(notionExe ? { notionExePath: notionExe.value.trim() } : {}),
       artworkFolderPath: artFolder ? artFolder.value.trim() : '',
       directorPrepRootPath: prepRoot ? prepRoot.value.trim() : '',
@@ -7148,6 +7308,35 @@ window.app = {
   },
   async moveCheckpointUI(checkpointId, direction) {
     window.DataModel.moveCheckpoint(campaign, checkpointId, direction);
+    await refresh();
+  },
+  startDeleteCheckpoint(id) {
+    const cps = window.Query.sortedCheckpoints(campaign);
+    const i = cps.findIndex((c) => c.id === id);
+    const near = cps[i + 1] || cps[i - 1];
+    ui.cpDelete = { id, mode: 'move', target: near ? near.id : null };
+    renderCreateContent();
+  },
+  cancelDeleteCheckpoint() { ui.cpDelete = null; renderCreateContent(); },
+  cpDeleteMode(mode) { if (ui.cpDelete) ui.cpDelete.mode = mode; renderCreateContent(); },
+  cpDeleteTarget(id) { if (ui.cpDelete) ui.cpDelete.target = id; },
+  async confirmDeleteCheckpoint() {
+    const d = ui.cpDelete; if (!d) return;
+    const u = window.DataModel.checkpointUsage(campaign, d.id);
+    const opts = !u.total ? {} : (d.mode === 'content' ? { deleteContent: true } : { moveTo: d.target });
+    const report = window.DataModel.deleteCheckpoint(campaign, d.id, opts);
+    ui.cpDelete = null;
+    if (!report) { if (window.Health) window.Health.notice('That milestone could not be deleted.'); renderCreateContent(); return; }
+    const cps = window.Query.sortedCheckpoints(campaign);
+    const fix = (v) => (cps.some((c) => c.id === v) ? v : (opts.moveTo && cps.some((c) => c.id === opts.moveTo) ? opts.moveTo : (cps[0] ? cps[0].id : null)));
+    ui.createContentTimeId = fix(ui.createContentTimeId); ui.curTime = fix(ui.curTime);
+    const note = [];
+    if (report.moved) note.push(`${report.moved} item${report.moved === 1 ? '' : 's'} moved`);
+    if (report.mergedPresence) note.push(`${report.mergedPresence} “Present here” list${report.mergedPresence === 1 ? '' : 's'} merged`);
+    if (report.droppedDuplicates) note.push(`${report.droppedDuplicates} duplicate placement${report.droppedDuplicates === 1 ? '' : 's'} dropped`);
+    if (report.descriptionsUnplaced) note.push(`${report.descriptionsUnplaced} extra description${report.descriptionsUnplaced === 1 ? '' : 's'} taken off the place (still in the Library)`);
+    if (report.deletedModules) note.push(`${report.deletedModules} item${report.deletedModules === 1 ? '' : 's'} deleted`);
+    if (window.Health) window.Health.notice(`Milestone deleted${note.length ? ': ' + note.join(', ') : ''}.`);
     await refresh();
   },
   onCheckpointLabelInput(checkpointId, value) {
@@ -7728,6 +7917,8 @@ Object.assign(window.app, {
 Object.assign(window.app, graphActions());
 Object.assign(window.app, conditionActions());
 Object.assign(window.app, questActions());
+Object.assign(window.app, kodexActions());
+Object.assign(window.app, encountersActions());
 
 if (window.TextFullscreen) window.TextFullscreen.setPopupCheck(() => mentionState.active || pickerState.open || !!ui.directorPicker || !!document.getElementById('quest-menu'));
 
@@ -7837,7 +8028,31 @@ function hideHoverCard() {
   const c = document.getElementById('hover-card');
   if (c) c.remove();
 }
+function showRewardHoverCard(target) {
+  const q = campaign.entities[target.dataset.reward];
+  if (!q || ui.mode !== 'play') return;
+  const Q = window.Quests;
+  const rewards = Q.rewardsOf(q).filter((r) => String(r.text || '').trim() || r.dcCheckId);
+  const ctx = window.Conditions.getContext();
+  const checks = campaign.dcChecks || [];
+  const body = rewards.length ? rewards.map((r, i) => {
+    const check = r.dcCheckId ? checks.find((c) => c.id === r.dcCheckId) : null;
+    const open = Q.rewardUnlocked(campaign, r, ctx);
+    const note = check ? `<div class="reward-hv-note">${open ? 'Unlocked' : 'Locked'}: ${esc(window.Conditions.dcCheckLabel(check))} ${esc(Q.DC_WHEN_LABELS[r.dcWhen] || '')}</div>` : '';
+    return `${i ? `<div class="reward-hv-join">${r.joiner === 'or' ? 'or' : 'and'}</div>` : ''}<div class="reward-hv-row${check && !open ? ' locked' : ''}"><p class="field-text">${rich(r.text) || '<i>(empty)</i>'}</p>${note}${r.publish ? '<span class="reward-hv-pub">on website</span>' : ''}</div>`;
+  }).join('') : '<p class="empty-hint">No rewards set on this quest yet.</p>';
+  const el = document.createElement('div');
+  el.id = 'hover-card'; el.className = 'hover-card';
+  el.innerHTML = `<div class="hover-head">${entityBadge(q, 18)}<span class="hover-name">Rewards — ${esc(q.name || '(unnamed quest)')}</span></div><div class="hover-body">${body}</div>`;
+  document.body.appendChild(el);
+  const r = target.getBoundingClientRect();
+  const w = el.offsetWidth, h = el.offsetHeight;
+  let y = r.bottom + 8;
+  if (y + h > window.innerHeight - 8) y = Math.max(8, r.top - h - 8);
+  el.style.left = `${Math.max(8, Math.min(r.left, window.innerWidth - w - 12))}px`; el.style.top = `${y}px`;
+}
 function showHoverCard(target) {
+  if (target.dataset.reward) { showRewardHoverCard(target); return; }
   const entity = campaign.entities[target.dataset.hover];
   if (!entity || ui.mode !== 'play') return;
   const card = window.Query.getEntityCard(campaign, entity.id, ui.curTime);
@@ -7858,7 +8073,7 @@ function showHoverCard(target) {
   el.style.left = `${Math.max(8, x)}px`; el.style.top = `${y}px`;
 }
 document.addEventListener('mouseover', (ev) => {
-  const t = ev.target.closest && ev.target.closest('[data-hover]');
+  const t = ev.target.closest && ev.target.closest('[data-hover],[data-reward]');
   if (!t) return;
   if (t === hoverEl) return;
   hideHoverCard();
@@ -7867,7 +8082,7 @@ document.addEventListener('mouseover', (ev) => {
   hoverTimer = setTimeout(() => showHoverCard(t), 280);
 });
 document.addEventListener('mouseout', (ev) => {
-  const t = ev.target.closest && ev.target.closest('[data-hover]');
+  const t = ev.target.closest && ev.target.closest('[data-hover],[data-reward]');
   if (!t || t.contains(ev.relatedTarget)) return;
   hideHoverCard();
 });

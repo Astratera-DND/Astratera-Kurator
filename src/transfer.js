@@ -91,6 +91,7 @@ function describeContent(campaign, entityId) {
 // and [[DCCHECK:id]].
 const RE_MENTION = /\[\[([a-zA-Z0-9_]+)\]\]/g;
 const RE_SAY = /\[\[SAY:([a-zA-Z0-9_]+)\]\]([\s\S]*?)\[\[\/SAY\]\]/g;
+const RE_REWARD = /\[\[REWARD:([a-zA-Z0-9_]+)\]\]/g;
 const RE_JUMP = /\[\[JUMP:([a-zA-Z0-9_]+)(?::([a-zA-Z0-9_]+))?\]\]([\s\S]*?)\[\[\/JUMP\]\]/g;
 const RE_DC = /\[\[DCCHECK:([a-zA-Z0-9_]+)\]\]/g;
 
@@ -104,10 +105,11 @@ function referencedIdsInText(text, into) {
   let m;
   RE_SAY.lastIndex = 0; while ((m = RE_SAY.exec(text))) into.entities.add(m[1]);
   RE_JUMP.lastIndex = 0; while ((m = RE_JUMP.exec(text))) into.entities.add(m[1]);
+  RE_REWARD.lastIndex = 0; while ((m = RE_REWARD.exec(text))) into.entities.add(m[1]);
   RE_DC.lastIndex = 0; while ((m = RE_DC.exec(text))) into.dcChecks.add(m[1]);
   RE_MENTION.lastIndex = 0;
   while ((m = RE_MENTION.exec(text))) {
-    if (!/^(DCCHECK|SAY|JUMP|SCENEBTN|MUSICBTN|QFBTN|DIRBTN)$/.test(m[1])) into.entities.add(m[1]);
+    if (!/^(DCCHECK|SAY|JUMP|REWARD|SCENEBTN|MUSICBTN|QFBTN|DIRBTN)$/.test(m[1])) into.entities.add(m[1]);
   }
 }
 
@@ -208,19 +210,20 @@ function ensureGroupPath(target, names, created) {
 function mapCheckpoints(source, target, usedIds, created) {
   if (!Array.isArray(target.checkpoints)) target.checkpoints = [];
   const map = new Map();
-  const srcSorted = (source.checkpoints || []).slice().sort((a, b) => a.order - b.order);
+  const srcSorted = (source.checkpoints || []).filter((c) => !c.encounter).sort((a, b) => a.order - b.order);
   const norm = (s) => String(s).trim().toLowerCase();
   let previousTargetId = null;
   srcSorted.forEach((cp) => {
     let match = target.checkpoints.find((t) => norm(t.label) === norm(cp.label));
     if (!match && usedIds.has(cp.id)) {
-      const sorted = target.checkpoints.slice().sort((a, b) => a.order - b.order);
+      const hidden = target.checkpoints.filter((t) => t.encounter);
+      const sorted = target.checkpoints.filter((t) => !t.encounter).sort((a, b) => a.order - b.order);
       let insertAt = 0;
       if (previousTargetId) insertAt = sorted.findIndex((t) => t.id === previousTargetId) + 1;
       match = { id: makeId('cp'), label: cp.label, order: 0 };
       sorted.splice(insertAt, 0, match);
       sorted.forEach((t, i) => { t.order = i; });
-      target.checkpoints = sorted;
+      target.checkpoints = sorted.concat(hidden);
       created.push(cp.label);
     }
     if (match) { map.set(cp.id, match.id); previousTargetId = match.id; }
@@ -309,9 +312,10 @@ function applyTransfer(source, target, entries) {
       const tid = timeId ? cpMap.get(timeId) : null;
       return `[[JUMP:${idMap.get(id)}${tid ? `:${tid}` : ''}]]${inner}[[/JUMP]]`;
     });
+    t = t.replace(RE_REWARD, (m, id) => (idMap.has(id) ? `[[REWARD:${idMap.get(id)}]]` : ''));
     t = t.replace(RE_DC, (m, id) => (dcMap.has(id) ? `[[DCCHECK:${dcMap.get(id)}]]` : m));
     t = t.replace(RE_MENTION, (m, id) => {
-      if (/^(DCCHECK|SAY|JUMP|SCENEBTN|MUSICBTN|QFBTN|DIRBTN)$/.test(id)) return m;
+      if (/^(DCCHECK|SAY|JUMP|REWARD|SCENEBTN|MUSICBTN|QFBTN|DIRBTN)$/.test(id)) return m;
       if (idMap.has(id)) return `[[${idMap.get(id)}]]`;
       if (source.entities[id]) { report.droppedReferences++; return nameOf(id); }
       return m;

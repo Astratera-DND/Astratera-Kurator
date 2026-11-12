@@ -138,4 +138,16 @@ function freshDir() { return fs.mkdtempSync(path.join(os.tmpdir(), 'settings-tes
   ok('if settings.json cannot be written, picking an image still works and the folder is remembered for the session');
 }
 
+{
+  const { usableWindowBounds } = require('../src/settings');
+  const screens = [{ x: 0, y: 0, width: 1920, height: 1040 }];
+  assert.deepStrictEqual(usableWindowBounds({ x: 100, y: 50, width: 800, height: 700, maximized: false }, screens), { width: 800, height: 700, maximized: false, x: 100, y: 50 });
+  const off = usableWindowBounds({ x: 4000, y: 50, width: 800, height: 700 }, screens);
+  assert.ok(off && off.x === undefined && off.width === 800, 'a window saved on a monitor that is gone keeps its size but is placed by the system');
+  assert.strictEqual(usableWindowBounds({ x: 0, y: 0, width: 50, height: 50 }, screens), null);
+  assert.strictEqual(usableWindowBounds(null, screens), null);
+  assert.strictEqual(usableWindowBounds({ x: 10, y: 10, width: 900, height: 800, maximized: true }, screens).maximized, true);
+  ok('saved window position/size is reused only when it is still on a screen');
+}
+
 console.log('\nAll settings tests passed.');

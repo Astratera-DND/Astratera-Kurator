@@ -215,4 +215,67 @@ function ok(msg) { console.log('ok  -', msg); }
   ok('getModuleAssignments resolves every placement of a shared module, each with its actual entity and checkpoint');
 }
 
+// --- Deleting a checkpoint: explicit, lossless by default ------------------
+{
+  const DM = require('../src/dataModel');
+  const Cond = require('../src/conditions');
+  function build() {
+    const c = emptyCampaign();
+    const loc = createEntity(c, { type: 'location', name: 'Dock' });
+    const npc = createEntity(c, { type: 'npc', name: 'Sailor' });
+    const a = createCheckpoint(c, { label: 'Dawn' }), b = createCheckpoint(c, { label: 'Noon' }), d = createCheckpoint(c, { label: 'Dusk' });
+    const note = createContentModule(c, { type: 'note', name: 'n', text: `see [[JUMP:${loc.id}:${b.id}]]x[[/JUMP]]` });
+    const asgB = createAssignment(c, { moduleId: note.id, entityId: loc.id, timeId: b.id });
+    const desc = createContentModule(c, { type: 'description', name: '', html: 'noon text' });
+    createAssignment(c, { moduleId: desc.id, entityId: loc.id, timeId: b.id });
+    const desc2 = createContentModule(c, { type: 'description', name: '', html: 'dusk text' });
+    createAssignment(c, { moduleId: desc2.id, entityId: loc.id, timeId: d.id });
+    c.blocks.push({ id: 'blk_x', kind: 'arrival', locationId: loc.id, timeId: b.id, presence: [npc.id] });
+    c.blocks.push({ id: 'blk_y', kind: 'arrival', locationId: loc.id, timeId: d.id, presence: [] });
+    const cond = Cond.createCondition(c, { name: 'Noon reached', kind: 'milestone', settings: { checkpointId: b.id } });
+    c.meta.startBookmark = { locationId: loc.id, timeId: b.id }; c.meta.lastContentTimeId = b.id;
+    return { c, loc, npc, a, b, d, note, desc, desc2, cond };
+  }
+  {
+    const { c, a, b, d } = build();
+    assert.strictEqual(DM.checkpointUsage(c, b.id).total > 0, true);
+    assert.strictEqual(DM.deleteCheckpoint(c, b.id), null, 'a used milestone is never deleted without a choice');
+    assert.strictEqual(c.checkpoints.length, 3);
+    const unused = createCheckpoint(c, { label: 'Spare' });
+    assert.ok(DM.deleteCheckpoint(c, unused.id), 'an unused one can be deleted when asked');
+    ok('a used checkpoint is refused without an explicit choice; an unused one deletes on request');
+  }
+  {
+    const { c, loc, npc, b, d, note, desc, desc2, cond } = build();
+    const r = DM.deleteCheckpoint(c, b.id, { moveTo: d.id });
+    assert.ok(r); assert.strictEqual(c.checkpoints.length, 2); assert.deepStrictEqual(c.checkpoints.map((x) => x.order).sort(), [0, 1]);
+    assert.ok(!JSON.stringify(c).includes(b.id), 'no reference to the deleted milestone is left anywhere');
+    const at = (m) => c.assignments.filter((x) => x.moduleId === m.id).map((x) => x.timeId);
+    assert.deepStrictEqual(at(note), [d.id]);
+    assert.deepStrictEqual(at(desc), [], 'a second description for the same place is taken off it...');
+    assert.ok(c.contentModules.some((m) => m.id === desc.id), '...but never deleted');
+    assert.strictEqual(r.descriptionsUnplaced, 1);
+    const arr = c.blocks.filter((x) => x.kind === 'arrival' && x.locationId === loc.id);
+    assert.strictEqual(arr.length, 1); assert.deepStrictEqual(arr[0].presence, [npc.id]);
+    assert.strictEqual(cond.settings.checkpointId, d.id);
+    assert.strictEqual(c.meta.startBookmark.timeId, d.id); assert.strictEqual(c.meta.lastContentTimeId, d.id);
+    assert.ok(note.text.includes(`[[JUMP:${loc.id}:${d.id}]]`));
+    ok('delete with move: placements, presence, condition, start point and links all follow, nothing lost');
+  }
+  {
+    const { c, b, d, note, desc, desc2 } = build();
+    const r = DM.deleteCheckpoint(c, b.id, { deleteContent: true });
+    assert.ok(r); assert.strictEqual(r.deletedModules, 2);
+    assert.ok(!c.contentModules.some((m) => m.id === note.id || m.id === desc.id));
+    assert.ok(c.contentModules.some((m) => m.id === desc2.id), 'content at other milestones is untouched');
+    assert.ok(!JSON.stringify(c).includes(b.id));
+    ok('delete with content: only what was placed at that milestone goes');
+  }
+  {
+    const c = emptyCampaign(); const only = createCheckpoint(c, { label: 'Only' });
+    assert.strictEqual(DM.deleteCheckpoint(c, only.id), null);
+    ok('the last milestone cannot be deleted');
+  }
+}
+
 console.log('\nAll Modular Content data-model tests passed.');

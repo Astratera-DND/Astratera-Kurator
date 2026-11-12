@@ -206,6 +206,9 @@ document.addEventListener('contextmenu', (ev) => {
   html += textMenuItem('t-link', 'Link to a section, topic, scene…', 'Ctrl+L');
   html += textMenuItem('t-dc', 'DC check…', 'Alt+D');
   html += textMenuItem('t-dir', 'Director button (scene, music, SFX…)', 'Alt+S');
+  if (typeof questOfField === 'function' && ui.mode === 'create') {
+    html += questOfField(ta) ? textMenuItem('t-reward', 'Quest reward', 'Ctrl+Q, R') : textMenuItem('t-reward-hint', 'Quest reward (mark this block as a quest first)', '', { disabled: true });
+  }
   html += '<div class="cm-sep"></div><div class="cm-label">Format</div>';
   html += textMenuItem('f-bold', '<b>Bold</b>', 'Ctrl+B');
   html += textMenuItem('f-italic', '<i>Italic</i>', 'Ctrl+I');
@@ -240,6 +243,7 @@ function textMenuRun(act, t) {
     case 't-link': startJumpLink(ta); break;
     case 't-dc': startDCCheck(ta); break;
     case 't-dir': insertDirectorButton(ta, 'choose'); break;
+    case 't-reward': questInsertReward(ta, t.start, t.end); break;
     case 'f-bold': wrapSelectionWithMarker(ta, '**'); break;
     case 'f-italic': wrapSelectionWithMarker(ta, '_'); break;
     case 'f-strike': wrapSelectionWithMarker(ta, '~~'); break;

@@ -97,4 +97,26 @@ function freshDir() { return fs.mkdtempSync(path.join(os.tmpdir(), 'campaign-mgr
   ok('active campaign selection is stable across repeated startup calls');
 }
 
+// --- Duplicate: copies data + images, not backups; original untouched -------
+{
+  const base = freshDir();
+  const first = cm.ensureActiveCampaign(base);
+  fs.mkdirSync(path.join(first.dir, 'images'), { recursive: true });
+  fs.writeFileSync(path.join(first.dir, 'images', 'npc_a.png'), 'img');
+  fs.mkdirSync(path.join(first.dir, 'backups'), { recursive: true });
+  fs.writeFileSync(path.join(first.dir, 'backups', 'old.json'), '{}');
+  const before = fs.readFileSync(path.join(first.dir, 'campaign.json'), 'utf8');
+  const copy = cm.duplicateCampaign(base, first.id, 'Second run');
+  assert.notStrictEqual(copy.id, first.id); assert.strictEqual(copy.name, 'Second run');
+  const dir = cm.campaignDir(base, copy.id);
+  assert.strictEqual(fs.readFileSync(path.join(dir, 'campaign.json'), 'utf8'), before);
+  assert.ok(fs.existsSync(path.join(dir, 'images', 'npc_a.png')), 'images are copied');
+  assert.ok(!fs.existsSync(path.join(dir, 'backups')), 'backup history is not copied');
+  assert.ok(fs.existsSync(path.join(first.dir, 'backups', 'old.json')) && fs.readFileSync(path.join(first.dir, 'campaign.json'), 'utf8') === before, 'original untouched');
+  assert.strictEqual(cm.listCampaigns(base).length, 2); assert.strictEqual(cm.getActiveId(base), copy.id);
+  assert.strictEqual(cm.duplicateCampaign(base, 'nope', 'x'), null);
+  assert.strictEqual(cm.duplicateCampaign(base, first.id, '  ').name.endsWith('(copy)'), true);
+  ok('duplicate copies data and images (not backups), leaves the original alone, names the copy');
+}
+
 console.log('\nAll campaign manager tests passed.');

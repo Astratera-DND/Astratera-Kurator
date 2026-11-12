@@ -36,7 +36,15 @@ function defaultSettings() {
     lastImageDirectory: '',
     // Folder of default artwork. A new NPC/location whose name matches a file
     // in here (loosely: MiraSelven.png, mira-selven.jpg…) is offered that image.
-    artworkFolderPath: ''
+    artworkFolderPath: '',
+    // Kodex connection: the folder Kodex drops export packages into (watched), and the
+    // inbox items already dealt with (name:mtime), so a package is offered only once.
+    kodexInboxPath: '',
+    kodexInboxSeen: [],
+    // Workspace folder Kodex last reported (its discovery file is gone while Kodex is closed). Used to list pages by file.
+    kodexWorkspaceDir: '',
+    // Last window position and size ({ x, y, width, height, maximized }), restored on the next start.
+    windowBounds: null
   };
 }
 
@@ -98,4 +106,23 @@ function rememberLastImageDirectory(baseDir, settings, pickedFilePath) {
   return updated;
 }
 
-module.exports = { loadSettings, saveSettings, settingsFile, usableDirectory, rememberLastImageDirectory, DEFAULT_NOTION_EXE_PATH };
+module.exports = { usableWindowBounds, loadSettings, saveSettings, settingsFile, usableDirectory, rememberLastImageDirectory, DEFAULT_NOTION_EXE_PATH };
+
+// A saved window rectangle is only used when it still lies (mostly) on a screen that exists now:
+// a monitor may have been unplugged since. `displays` = [{ x, y, width, height }] work areas.
+function usableWindowBounds(saved, displays) {
+  if (!saved || typeof saved !== 'object') return null;
+  const w = Math.round(Number(saved.width)), h = Math.round(Number(saved.height));
+  if (!Number.isFinite(w) || !Number.isFinite(h) || w < 300 || h < 300) return null;
+  const out = { width: w, height: h, maximized: saved.maximized === true };
+  const x = Number(saved.x), y = Number(saved.y);
+  if (Number.isFinite(x) && Number.isFinite(y)) {
+    const visible = (displays || []).some((d) => {
+      const ox = Math.min(x + w, d.x + d.width) - Math.max(x, d.x);
+      const oy = Math.min(y + h, d.y + d.height) - Math.max(y, d.y);
+      return ox >= 120 && oy >= 80;
+    });
+    if (visible) { out.x = Math.round(x); out.y = Math.round(y); }
+  }
+  return out;
+}

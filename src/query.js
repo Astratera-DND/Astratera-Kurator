@@ -8,8 +8,12 @@
 // only the final window.Query assignment is visible outside.
 (function () {
 
+function _enc() { return (typeof module !== 'undefined' && module.exports) ? require('./encounters') : window.Encounters; }
+
 function sortedCheckpoints(campaign) {
-  return campaign.checkpoints.slice().sort((a, b) => a.order - b.order);
+  // The hidden encounter checkpoint belongs to the Encounters tab / wagon mode only.
+  const enc = _enc().getScope() === 'encounter';
+  return campaign.checkpoints.filter((c) => !!c.encounter === enc).sort((a, b) => a.order - b.order);
 }
 
 function checkpointById(campaign, id) {
@@ -141,6 +145,16 @@ function getDCCheckById(campaign, id) {
 // itself full rich text — mentions, SAY, JUMP, formatting, all of it —
 // so it goes through a full independent renderMentions call of its own,
 // exactly like a location's description or a beat's text would.
+function dcCheckButtonHTML(dcCheck, label) {
+  if (label == null) {
+    const typeInfo = _constants.CHECK_TYPES.find((t) => t.key === dcCheck.checkType);
+    const typeLabel = typeInfo ? typeInfo.label : dcCheck.checkType;
+    const last = (dcCheck.rollLog || []).slice(-1)[0];
+    label = `${(dcCheck.name && dcCheck.name.trim()) ? dcCheck.name : typeLabel} (${typeLabel})${last ? ` · rolled ${last.value}` : ''}`;
+  }
+  return `<button type="button" class="dc-check-btn" onclick="window.app.openDCCheckPlay('${dcCheck.id}')">${escapeHtml(label)}</button>`;
+}
+
 function renderDCCheckInlineHTML(dcCheck, campaign) {
   const typeInfo = _constants.CHECK_TYPES.find((t) => t.key === dcCheck.checkType);
   const typeLabel = typeInfo ? typeInfo.label : dcCheck.checkType;
@@ -151,7 +165,7 @@ function renderDCCheckInlineHTML(dcCheck, campaign) {
   let buttonLabel = `${displayName} (${typeLabel})`;
   if (lastRoll) buttonLabel += ` · rolled ${lastRoll.value}`;
 
-  let html = `<button type="button" class="dc-check-btn" onclick="window.app.openDCCheckPlay('${dcCheck.id}')">${escapeHtml(buttonLabel)}</button>`;
+  let html = dcCheckButtonHTML(dcCheck, buttonLabel);
 
   if (lastRoll) {
     const rows = resolveDCCheckTableRows(dcCheck, lastRoll.value);
@@ -438,6 +452,26 @@ function renderMentions(rawText, campaign) {
     return protect(renderDCCheckInlineHTML(dcCheck, campaign));
   });
 
+  // A quest reward token: [[REWARD:questId]]. In Play it becomes the quest's rewards (a reward tied to a
+  // DC check shows that check until it has the right result); hovering it lists every reward. While preparing
+  // it is just a small marker, so the DM sees where it sits.
+  escaped = escaped.replace(/\[\[REWARD:([a-zA-Z0-9_]+)\]\]/g, (match, id) => {
+    const quest = campaign.entities[id];
+    if (!quest || quest.type !== 'quest') return protect('<span class="reward-token empty">Reward (quest missing)</span>');
+    const Q = (typeof module !== 'undefined' && module.exports) ? require('./quests') : window.Quests;
+    const rewards = Q.rewardsOf(quest).filter((r) => String(r.text || '').trim() || r.dcCheckId);
+    const ctx = _conditions.getContext();
+    if (ctx.mode !== 'play') return protect(`<span class="reward-token" data-reward="${id}">&#9733; Reward${rewards.length ? ` (${rewards.length})` : ' — none set yet'}</span>`);
+    if (!rewards.length) return protect(`<span class="reward-token empty" data-reward="${id}">&#9733; Reward — none set yet</span>`);
+    const parts = rewards.map((r, i) => {
+      const check = r.dcCheckId ? (campaign.dcChecks || []).find((c) => c.id === r.dcCheckId) : null;
+      const open = Q.rewardUnlocked(campaign, r, ctx);
+      const body = (check && !open) ? dcCheckButtonHTML(check) : renderMentions(r.text, campaign).html;
+      return `${i ? `<span class="reward-join">${r.joiner === 'or' ? 'or' : 'and'}</span>` : ''}<span class="reward-part${check && !open ? ' locked' : ''}">${body}</span>`;
+    });
+    return protect(`<span class="reward-token" data-reward="${id}">&#9733; ${parts.join(' ')}</span>`);
+  });
+
   // A title shown greyed because its whole block is waiting on a condition.
   escaped = escaped.replace(/\[\[GREY\]\]([\s\S]*?)\[\[\/GREY\]\]/g, (match, inner) => protect(`<span class="cond-locked">${processInlineContent(inner)}</span>`));
 
@@ -710,6 +744,7 @@ function filterEntitiesForPicker(campaign, entities, { query = '', type = '', gr
     .filter((e) => {
       if (type && e.type !== type) return false;
       if (!type && e.type === 'quest') return false;   // quests are tags for content, never people or places in a picker
+      if (_enc().isEncounter(e)) return false;        // encounters are never people or places in a picker
       if (groupId === '__none__') {
         if (e.groupId && (campaign.entityGroups || []).some((g) => g.id === e.groupId)) return false;
       } else if (allowedGroupIds && !allowedGroupIds.has(e.groupId)) {
@@ -842,7 +877,7 @@ function inventoryCategoryToTable(category) {
 // match again, since the token contains the id, not the display name.
 function autoTagEntityNames(text, campaign) {
   const entities = Object.values(campaign.entities)
-    .filter((e) => e.name && e.name.trim().length >= 2)
+    .filter((e) => e.name && e.name.trim().length >= 2 && !_enc().isEncounter(e))
     .sort((a, b) => b.name.length - a.name.length);
 
   let result = text;
@@ -1028,6 +1063,9 @@ function getLocationView(campaign, locationId, timeId) {
   let fallback = false;
   let fallbackFrom = null;
 
+  // An encounter has no milestones: whatever is on its hidden checkpoint is always shown, with or without a "present here" list.
+  if (!arrival && curCp.encounter) arrival = { id: null, kind: 'arrival', locationId, timeId, presence: [] };
+
   if (!arrival) {
     const earlier = checkpoints.filter((c) => c.order < curCp.order).sort((a, b) => b.order - a.order);
     for (const cp of earlier) {
@@ -1158,6 +1196,7 @@ function searchPlainText(campaign, s) {
       const c = (campaign.dcChecks || []).find((x) => x.id === id);
       return c && c.name ? c.name : '';
     })
+    .replace(/\[\[REWARD:[a-zA-Z0-9_]+\]\]/g, '')
     .replace(/\[\[(SCENEBTN|MUSICBTN|QFBTN):[^\]]*\]\]/g, '').replace(/\[\[\/(SCENEBTN|MUSICBTN|QFBTN)\]\]/g, '')
     .replace(/\[\[\/?IF(:[^\]]*)?\]\]/g, '')
     .replace(/\[\[([a-zA-Z0-9_]+)\]\]/g, (m, id) => (campaign.entities[id] ? campaign.entities[id].name : ''))
@@ -1184,7 +1223,7 @@ function searchContent(campaign, query, { limit = 60, snippetRadius = 48 } = {})
   const byModule = new Map();
   (campaign.assignments || []).forEach((a) => {
     const e = campaign.entities[a.entityId];
-    if (!e || e.type === 'quest') return;
+    if (!e || e.type === 'quest' || !_enc().inScope(e)) return;
     if (!byModule.has(a.moduleId)) byModule.set(a.moduleId, []);
     byModule.get(a.moduleId).push(a);
   });

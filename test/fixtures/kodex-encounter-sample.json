@@ -1,0 +1,512 @@
+{
+  "format": "astratera-kodex-export",
+  "version": 2,
+  "schema": 2,
+  "app": "kodex",
+  "exportedAt": "2026-11-09T20:46:00.181Z",
+  "source": {
+    "app": "Astratera Kodex",
+    "version": "t",
+    "workspace": "Test world"
+  },
+  "options": {
+    "subPlaces": true,
+    "residents": true,
+    "types": [
+      "npc"
+    ],
+    "cards": true,
+    "hidden": true,
+    "exclude": [],
+    "checkpoints": {
+      "enabled": false,
+      "timeline": null,
+      "scope": "all"
+    }
+  },
+  "root": "col",
+  "scope": {
+    "rootId": "col",
+    "entityIds": [
+      "e1",
+      "e2",
+      "e3",
+      "gate",
+      "doc"
+    ]
+  },
+  "groups": [
+    {
+      "id": "gate",
+      "name": "Rust Gate",
+      "parentId": null,
+      "type": "venue"
+    }
+  ],
+  "entities": [
+    {
+      "id": "e1",
+      "kuratorId": null,
+      "updatedAt": "2026-11-09T20:46:00.176Z",
+      "kind": "encounter",
+      "type": "encounter",
+      "role": "encounter",
+      "name": "Broken Caravan",
+      "profile": {
+        "race": "",
+        "age": ""
+      },
+      "icon": null,
+      "tags": [
+        "road"
+      ],
+      "summary": "A wagon on its side.",
+      "location": {
+        "id": "col",
+        "path": [],
+        "via": "collection"
+      },
+      "placeIds": [],
+      "parentId": null,
+      "presentIn": [],
+      "path": [],
+      "sections": [
+        {
+          "role": "summary",
+          "title": "Summary",
+          "hidden": false,
+          "markdown": "A wagon on its side.",
+          "text": "A wagon on its side.",
+          "hash": "2a85e5a4c34933ab554eada0db3fbbea442d3fc4",
+          "link": "astratera-lore://open/Test%20world/e1?section=summary&focus=0"
+        },
+        {
+          "role": "hooks",
+          "title": "Hooks",
+          "hidden": false,
+          "markdown": "Who took the cargo?",
+          "text": "Who took the cargo?",
+          "hash": "98ba22f3a67429a5e5e6cc7f6d5bca9985f3b86c",
+          "link": "astratera-lore://open/Test%20world/e1?section=hooks&focus=0"
+        }
+      ],
+      "body": {
+        "markdown": "**[Doctor](kodex:doc)** – Kind face.\n\n**[Rust Gate](kodex:gate)**\n\n**[Brass Lamp](kodex:lamp)** – Glows faintly.\n\n**[Bridge fight](kodex:fight)**",
+        "text": "Doctor – Kind face.\n\nRust Gate\n\nBrass Lamp – Glows faintly.\n\nBridge fight"
+      },
+      "quotes": [],
+      "embeddedItems": [
+        {
+          "key": "i_brass-lamp",
+          "title": "Brass Lamp",
+          "itemId": "lamp",
+          "plain": true,
+          "markdown": "Glows faintly.",
+          "text": "Glows faintly."
+        }
+      ],
+      "toggles": [],
+      "statblock": null,
+      "extraStatblocks": [],
+      "props": [],
+      "cover": null,
+      "images": [],
+      "image": null,
+      "mentions": [
+        {
+          "id": "doc",
+          "name": "Doctor",
+          "inPackage": true
+        },
+        {
+          "id": "gate",
+          "name": "Rust Gate",
+          "inPackage": true
+        },
+        {
+          "id": "lamp",
+          "name": "Brass Lamp",
+          "inPackage": false
+        },
+        {
+          "id": "fight",
+          "name": "Bridge fight",
+          "inPackage": false
+        }
+      ],
+      "links": {
+        "lore": "astratera-lore://open/Test%20world/e1?focus=0"
+      },
+      "encounter": {
+        "collections": [
+          {
+            "id": "col",
+            "name": "Road to Karthy",
+            "index": 1,
+            "of": 3,
+            "die": "d6",
+            "range": "1–2"
+          }
+        ]
+      },
+      "presentHere": [
+        "doc"
+      ],
+      "targets": {
+        "summary": {
+          "markdown": "A wagon on its side.",
+          "hash": "2a85e5a4c34933ab554eada0db3fbbea442d3fc4"
+        },
+        "beat:hooks": {
+          "markdown": "Who took the cargo?",
+          "hash": "98ba22f3a67429a5e5e6cc7f6d5bca9985f3b86c"
+        },
+        "beat:i_brass-lamp": {
+          "markdown": "Glows faintly.",
+          "hash": "1e6f7cb85c204a0f2bbb8a634254430810301145",
+          "title": "Brass Lamp",
+          "item": true,
+          "itemId": "lamp",
+          "plain": true
+        },
+        "description": {
+          "markdown": "**[Doctor](kodex:doc)** – Kind face.\n\n**[Rust Gate](kodex:gate)**\n\n**[Brass Lamp](kodex:lamp)** – Glows faintly.\n\n**[Bridge fight](kodex:fight)**",
+          "hash": "a9eb1afd2b79b9ad02624f009c51016f35afe7db",
+          "combined": true
+        },
+        "presence": {
+          "value": [
+            "doc"
+          ],
+          "hash": "453e4c825056f6828c0e4b4b16be0d455d952660",
+          "readonly": true
+        }
+      }
+    },
+    {
+      "id": "e2",
+      "kuratorId": null,
+      "updatedAt": "2026-11-09T20:46:00.177Z",
+      "kind": "encounter",
+      "type": "encounter",
+      "role": "encounter",
+      "name": "Toll Bridge",
+      "profile": {
+        "race": "",
+        "age": ""
+      },
+      "icon": null,
+      "tags": [],
+      "summary": "",
+      "location": {
+        "id": "col",
+        "path": [],
+        "via": "collection"
+      },
+      "placeIds": [],
+      "parentId": null,
+      "presentIn": [],
+      "path": [],
+      "sections": [
+        {
+          "role": "description",
+          "title": "Description",
+          "hidden": false,
+          "markdown": "A troll wants coin.",
+          "text": "A troll wants coin.",
+          "hash": "b428e1776b627d24316a5e1bf6e13780690d185e",
+          "link": "astratera-lore://open/Test%20world/e2?section=description&focus=0"
+        }
+      ],
+      "body": {
+        "markdown": "**[Doctor](kodex:doc)** – Kind face.",
+        "text": "Doctor – Kind face."
+      },
+      "quotes": [],
+      "embeddedItems": [],
+      "toggles": [],
+      "statblock": null,
+      "extraStatblocks": [],
+      "props": [],
+      "cover": null,
+      "images": [],
+      "image": null,
+      "mentions": [
+        {
+          "id": "doc",
+          "name": "Doctor",
+          "inPackage": true
+        }
+      ],
+      "links": {
+        "lore": "astratera-lore://open/Test%20world/e2?focus=0"
+      },
+      "encounter": {
+        "collections": [
+          {
+            "id": "col",
+            "name": "Road to Karthy",
+            "index": 2,
+            "of": 3,
+            "die": "d6",
+            "range": "3–4"
+          }
+        ]
+      },
+      "presentHere": [
+        "doc"
+      ],
+      "targets": {
+        "description": {
+          "markdown": "A troll wants coin.\n\n**[Doctor](kodex:doc)** – Kind face.",
+          "hash": "f7bd7c51fc0d56081d1ac358b80b37c2103ead11",
+          "combined": true
+        },
+        "presence": {
+          "value": [
+            "doc"
+          ],
+          "hash": "453e4c825056f6828c0e4b4b16be0d455d952660",
+          "readonly": true
+        }
+      }
+    },
+    {
+      "id": "e3",
+      "kuratorId": null,
+      "updatedAt": "2026-11-09T20:46:00.177Z",
+      "kind": "encounter",
+      "type": "encounter",
+      "role": "encounter",
+      "name": "Hungry Wolves",
+      "profile": {
+        "race": "",
+        "age": ""
+      },
+      "icon": null,
+      "tags": [],
+      "summary": "",
+      "location": {
+        "id": "col",
+        "path": [],
+        "via": "collection"
+      },
+      "placeIds": [],
+      "parentId": null,
+      "presentIn": [],
+      "path": [],
+      "sections": [
+        {
+          "role": "description",
+          "title": "Description",
+          "hidden": false,
+          "markdown": "Eyes in the dark.",
+          "text": "Eyes in the dark.",
+          "hash": "dfefb42e1e4ec803311a75bd30abe2f1f0ff6585",
+          "link": "astratera-lore://open/Test%20world/e3?section=description&focus=0"
+        }
+      ],
+      "body": {
+        "markdown": "",
+        "text": ""
+      },
+      "quotes": [],
+      "embeddedItems": [],
+      "toggles": [],
+      "statblock": null,
+      "extraStatblocks": [],
+      "props": [],
+      "cover": null,
+      "images": [],
+      "image": null,
+      "mentions": [],
+      "links": {
+        "lore": "astratera-lore://open/Test%20world/e3?focus=0"
+      },
+      "encounter": {
+        "collections": [
+          {
+            "id": "col",
+            "name": "Road to Karthy",
+            "index": 3,
+            "of": 3,
+            "die": "d6",
+            "range": "5–6"
+          }
+        ]
+      },
+      "presentHere": [],
+      "targets": {
+        "description": {
+          "markdown": "Eyes in the dark.",
+          "hash": "dfefb42e1e4ec803311a75bd30abe2f1f0ff6585"
+        },
+        "presence": {
+          "value": [],
+          "hash": "97d170e1550eee4afc0af065b78cda302a97674c",
+          "readonly": true
+        }
+      }
+    },
+    {
+      "id": "gate",
+      "kuratorId": null,
+      "updatedAt": "2026-11-09T20:46:00.173Z",
+      "kind": "location",
+      "type": "venue",
+      "role": "place",
+      "name": "Rust Gate",
+      "profile": {
+        "race": "",
+        "age": ""
+      },
+      "icon": null,
+      "tags": [],
+      "summary": "",
+      "location": null,
+      "placeIds": [],
+      "parentId": null,
+      "path": [],
+      "sections": [],
+      "body": {
+        "markdown": "",
+        "text": ""
+      },
+      "quotes": [],
+      "embeddedItems": [],
+      "toggles": [],
+      "statblock": null,
+      "extraStatblocks": [],
+      "props": [],
+      "cover": null,
+      "images": [],
+      "image": null,
+      "mentions": [],
+      "links": {
+        "lore": "astratera-lore://open/Test%20world/gate?focus=0"
+      },
+      "encounterId": "e1",
+      "children": [],
+      "presentHere": [],
+      "presentHereDeep": [],
+      "targets": {
+        "presence": {
+          "value": [],
+          "hash": "97d170e1550eee4afc0af065b78cda302a97674c",
+          "readonly": true
+        }
+      }
+    },
+    {
+      "id": "doc",
+      "kuratorId": null,
+      "updatedAt": "2026-11-09T20:46:00.174Z",
+      "kind": "npc",
+      "type": "npc",
+      "role": "resident",
+      "name": "Doctor",
+      "profile": {
+        "race": "",
+        "age": ""
+      },
+      "icon": null,
+      "tags": [],
+      "summary": "",
+      "location": {
+        "id": "e1",
+        "path": [],
+        "via": "card"
+      },
+      "placeIds": [],
+      "parentId": null,
+      "presentIn": [
+        "e1",
+        "e2"
+      ],
+      "path": [],
+      "sections": [],
+      "body": {
+        "markdown": "Kind face.",
+        "text": "Kind face."
+      },
+      "quotes": [],
+      "embeddedItems": [],
+      "toggles": [],
+      "statblock": null,
+      "extraStatblocks": [],
+      "props": [],
+      "cover": null,
+      "images": [],
+      "image": null,
+      "mentions": [],
+      "links": {
+        "lore": "astratera-lore://open/Test%20world/doc?focus=0"
+      },
+      "targets": {
+        "note:body": {
+          "markdown": "Kind face.",
+          "hash": "875daaf14e57f337bddf96c5dcbb9cb2827084e3"
+        }
+      }
+    }
+  ],
+  "assets": [],
+  "warnings": [
+    "Bridge fight is a card in Broken Caravan: battles stay in Kodex and are not exported"
+  ],
+  "encounterCollections": [
+    {
+      "id": "col",
+      "name": "Road to Karthy",
+      "dice": {
+        "label": "d6",
+        "die": 6,
+        "count": 3,
+        "kind": "group",
+        "note": ""
+      },
+      "route": {
+        "from": {
+          "name": "Rust Gate",
+          "placeId": "gate",
+          "inPackage": true
+        },
+        "via": [
+          {
+            "name": "Old Mill"
+          }
+        ],
+        "to": {
+          "name": "Dura Harbour"
+        },
+        "note": "3 days, marshy"
+      },
+      "entries": [
+        {
+          "index": 1,
+          "from": 1,
+          "to": 2,
+          "encounterId": "e1",
+          "name": "Broken Caravan",
+          "inPackage": true
+        },
+        {
+          "index": 2,
+          "from": 3,
+          "to": 4,
+          "encounterId": "e2",
+          "name": "Toll Bridge",
+          "inPackage": true
+        },
+        {
+          "index": 3,
+          "from": 5,
+          "to": 6,
+          "encounterId": "e3",
+          "name": "Hungry Wolves",
+          "inPackage": true
+        }
+      ]
+    }
+  ]
+}

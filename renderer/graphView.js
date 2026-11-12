@@ -1063,7 +1063,7 @@ function gvWinHTML(m) {
   const cps = window.Query.sortedCheckpoints(campaign);
   const assignments = window.Query.getModuleAssignments(campaign, m.id);
   const allowsNoTime = gvAllowsNoTime(m.type);
-  const compat = Object.values(campaign.entities).filter((e) => gvCompatible(m.type, e)).sort((a, b) => a.name.localeCompare(b.name));
+  const compat = Object.values(campaign.entities).filter((e) => !e.encounter && gvCompatible(m.type, e)).sort((a, b) => a.name.localeCompare(b.name));
   let html = `<div class="gv-win-head" id="gv-win-head">
       <span class="gv-ct">${esc(labels[m.type] || m.type)}</span>
       <span style="flex:1"></span>
@@ -1191,7 +1191,7 @@ function gvEntWinHTML(e) {
     html += `<div class="section-label">Present here</div>`;
     html += mine.length ? mine.map((b) => `<div class="gv-assign"><span class="gv-assign-name">${esc(cpLabel(b.timeId))}</span><span class="gv-chips">${(b.presence || []).map((id) => campaign.entities[id] ? `<span class="gv-chip">${esc(campaign.entities[id].name)}<button title="Remove" onclick="window.app.gvEntRemovePresence('${b.id}','${id}')">×</button></span>` : '').join('')}</span></div>`).join('')
       : '<p class="empty-hint">Nobody is placed here yet.</p>';
-    const cands = Object.values(campaign.entities).filter((x) => x.id !== e.id).sort((p, q) => p.name.localeCompare(q.name));
+    const cands = Object.values(campaign.entities).filter((x) => !x.encounter && x.id !== e.id).sort((p, q) => p.name.localeCompare(q.name));
     html += `<div class="gv-assign add"><select id="gv-ew-pres-who"><option value="">Add who is here…</option>${cands.map((x) => `<option value="${x.id}">${esc(x.name)} (${x.type})</option>`).join('')}</select>
       <select id="gv-ew-pres-time">${gvTimeOptions(gv().time || (cps[0] && cps[0].id), false)}</select>
       <button class="icon-btn" onclick="window.app.gvEntAddPresence('${e.id}')">${icon('plus')}</button></div>`;
@@ -1200,7 +1200,7 @@ function gvEntWinHTML(e) {
     html += `<div class="section-label">Present at</div>`;
     html += mine.length ? mine.map((b) => `<div class="gv-assign"><span class="gv-assign-name">${esc((campaign.entities[b.locationId] || { name: '?' }).name)}</span><span class="hint" style="margin:0;flex:1">${esc(cpLabel(b.timeId))}</span><button class="mini-btn" title="Remove" onclick="window.app.gvEntRemovePresence('${b.id}','${e.id}')">${icon('x')}</button></div>`).join('')
       : '<p class="empty-hint">Not placed at any location yet.</p>';
-    const locs = Object.values(campaign.entities).filter((x) => x.type === 'location').sort((p, q) => p.name.localeCompare(q.name));
+    const locs = Object.values(campaign.entities).filter((x) => x.type === 'location' && !x.encounter).sort((p, q) => p.name.localeCompare(q.name));
     html += `<div class="gv-assign add"><select id="gv-ew-pres-where"><option value="">Place at…</option>${locs.map((x) => `<option value="${x.id}">${esc(x.name)}</option>`).join('')}</select>
       <select id="gv-ew-pres-time">${gvTimeOptions(gv().time || (cps[0] && cps[0].id), false)}</select>
       <button class="icon-btn" onclick="window.app.gvEntAddPresence('${e.id}')">${icon('plus')}</button></div>`;

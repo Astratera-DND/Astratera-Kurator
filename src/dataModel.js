@@ -220,7 +220,7 @@ function assignEntitiesToGroup(campaign, entityIds, groupId) {
 // --- Checkpoints (time) -----------------------------------------------
 
 function createCheckpoint(campaign, { label }) {
-  const maxOrder = campaign.checkpoints.reduce((m, c) => Math.max(m, c.order), -1);
+  const maxOrder = campaign.checkpoints.filter((c) => !c.encounter).reduce((m, c) => Math.max(m, c.order), -1);
   const cp = { id: makeId('cp'), label, order: maxOrder + 1 };
   campaign.checkpoints.push(cp);
   return cp;
@@ -231,7 +231,7 @@ function createCheckpoint(campaign, { label }) {
 // purely for fixing it up afterward, e.g. a checkpoint added out of
 // chronological sequence. No-ops silently at either end of the list.
 function moveCheckpoint(campaign, checkpointId, direction) {
-  const sorted = campaign.checkpoints.slice().sort((a, b) => a.order - b.order);
+  const sorted = campaign.checkpoints.filter((c) => !c.encounter).sort((a, b) => a.order - b.order);
   const idx = sorted.findIndex((c) => c.id === checkpointId);
   const swapWith = idx + direction;
   if (idx === -1 || swapWith < 0 || swapWith >= sorted.length) return false;
@@ -241,6 +241,97 @@ function moveCheckpoint(campaign, checkpointId, direction) {
   a.order = b.order;
   b.order = temp;
   return true;
+}
+
+// --- Deleting a checkpoint (only ever on the person's explicit request) ------------------------
+
+// What a checkpoint is used by, so the person can see what a delete would touch.
+function checkpointUsage(campaign, checkpointId) {
+  const asg = (campaign.assignments || []).filter((a) => a.timeId === checkpointId);
+  const modules = new Set(asg.map((a) => a.moduleId));
+  const arrivals = (campaign.blocks || []).filter((b) => b.kind === 'arrival' && b.timeId === checkpointId);
+  const conditions = (campaign.conditions || []).filter((c) => c.kind === 'milestone' && c.settings && c.settings.checkpointId === checkpointId).map((c) => c.name);
+  const re = new RegExp(`\\[\\[JUMP:[a-zA-Z0-9_]+:${checkpointId}\\]\\]`, 'g');
+  let links = 0;
+  (function walk(v) {
+    if (typeof v === 'string') { const m = v.match(re); if (m) links += m.length; }
+    else if (Array.isArray(v)) v.forEach(walk);
+    else if (v && typeof v === 'object') Object.keys(v).forEach((k) => walk(v[k]));
+  })([campaign.contentModules, campaign.entities, campaign.blocks, campaign.dcChecks]);
+  const start = !!(campaign.meta && campaign.meta.startBookmark && campaign.meta.startBookmark.timeId === checkpointId);
+  return { placements: asg.length, modules: modules.size, presenceLists: arrivals.filter((b) => (b.presence || []).length).length, conditions, links, start,
+    total: asg.length + arrivals.length + conditions.length + links + (start ? 1 : 0) };
+}
+
+// Deletes a checkpoint.
+//   moveTo        another checkpoint id: everything that used this one is moved there instead.
+//   deleteContent true: the content placed at this checkpoint is deleted with it (modules that are still
+//                 placed somewhere else stay). Never the default; the caller must ask for it explicitly.
+// Without either, only an unused checkpoint can be deleted. Returns a report, or null if refused.
+function deleteCheckpoint(campaign, checkpointId, { moveTo = null, deleteContent = false } = {}) {
+  const cp = campaign.checkpoints.find((c) => c.id === checkpointId);
+  if (!cp || cp.encounter || campaign.checkpoints.filter((c) => !c.encounter).length < 2) return null;
+  const target = moveTo ? campaign.checkpoints.find((c) => c.id === moveTo) : null;
+  if (moveTo && (!target || moveTo === checkpointId)) return null;
+  const usage = checkpointUsage(campaign, checkpointId);
+  if (!target && !deleteContent && usage.total) return null;
+  const report = { moved: 0, mergedPresence: 0, droppedDuplicates: 0, descriptionsUnplaced: 0, deletedModules: 0, relinked: 0 };
+  const newId = target ? target.id : null;
+
+  if (deleteContent) {
+    const touched = new Set();
+    campaign.assignments.filter((a) => a.timeId === checkpointId).forEach((a) => touched.add(a.moduleId));
+    campaign.assignments = campaign.assignments.filter((a) => a.timeId !== checkpointId);
+    touched.forEach((mid) => {
+      if (!campaign.assignments.some((a) => a.moduleId === mid)) { campaign.contentModules = campaign.contentModules.filter((m) => m.id !== mid); report.deletedModules++; }
+    });
+    campaign.blocks = (campaign.blocks || []).filter((b) => b.timeId !== checkpointId);
+    questsModule().sanitize(campaign);
+  } else if (target) {
+    // Placements: move them, skipping any that would duplicate one already there; a second description
+    // for the same place is taken off the place (it stays in the library, nothing is lost).
+    campaign.assignments.filter((a) => a.timeId === checkpointId).forEach((a) => {
+      const m = campaign.contentModules.find((x) => x.id === a.moduleId);
+      const same = campaign.assignments.some((o) => o !== a && o.moduleId === a.moduleId && o.entityId === a.entityId && (o.timeId || null) === newId);
+      if (same) { campaign.assignments = campaign.assignments.filter((o) => o !== a); report.droppedDuplicates++; return; }
+      if (m && m.type === 'description' && campaign.assignments.some((o) => o !== a && o.entityId === a.entityId && o.timeId === newId && (campaign.contentModules.find((x) => x.id === o.moduleId) || {}).type === 'description')) {
+        campaign.assignments = campaign.assignments.filter((o) => o !== a); report.descriptionsUnplaced++; return;
+      }
+      updateAssignmentTimeId(campaign, a.id, newId); report.moved++;
+    });
+    // "Present here" lists: merged into the one already at the target for that location, otherwise moved.
+    (campaign.blocks || []).filter((b) => b.timeId === checkpointId).forEach((b) => {
+      if (b.kind === 'arrival') {
+        const there = campaign.blocks.find((o) => o !== b && o.kind === 'arrival' && o.locationId === b.locationId && o.timeId === newId);
+        if (there) {
+          there.presence = Array.from(new Set([...(there.presence || []), ...(b.presence || [])]));
+          campaign.blocks = campaign.blocks.filter((o) => o !== b); report.mergedPresence++;
+          return;
+        }
+      }
+      b.timeId = newId;
+    });
+  }
+
+  // Milestone conditions, start point, last-used milestone, and [[JUMP:id:checkpoint]] links.
+  (campaign.conditions || []).forEach((c) => { if (c.kind === 'milestone' && c.settings && c.settings.checkpointId === checkpointId) { c.settings.checkpointId = newId; report.relinked++; } });
+  if (campaign.meta) {
+    if (campaign.meta.startBookmark && campaign.meta.startBookmark.timeId === checkpointId) { if (newId) campaign.meta.startBookmark.timeId = newId; else delete campaign.meta.startBookmark; }
+    if (campaign.meta.lastContentTimeId === checkpointId) campaign.meta.lastContentTimeId = newId;
+  }
+  const jump = new RegExp(`\\[\\[JUMP:([a-zA-Z0-9_]+):${checkpointId}\\]\\]`, 'g');
+  (function walk(o) {
+    if (Array.isArray(o)) { o.forEach((v, i) => { if (typeof v === 'string') { if (jump.test(v)) { jump.lastIndex = 0; o[i] = v.replace(jump, (m, id) => `[[JUMP:${id}${newId ? ':' + newId : ''}]]`); } jump.lastIndex = 0; } else walk(v); }); }
+    else if (o && typeof o === 'object') Object.keys(o).forEach((k) => {
+      const v = o[k];
+      if (typeof v === 'string') { if (jump.test(v)) { jump.lastIndex = 0; o[k] = v.replace(jump, (m, id) => `[[JUMP:${id}${newId ? ':' + newId : ''}]]`); } jump.lastIndex = 0; }
+      else walk(v);
+    });
+  })([campaign.contentModules, campaign.entities, campaign.blocks, campaign.dcChecks]);
+
+  campaign.checkpoints = campaign.checkpoints.filter((c) => c.id !== checkpointId);
+  campaign.checkpoints.filter((c) => !c.encounter).sort((a, b) => a.order - b.order).forEach((c, i) => { c.order = i; });
+  return report;
 }
 
 // --- Entity groups -------------------------------------------------------
@@ -994,6 +1085,7 @@ function emptyCampaign() {
 }
 
 const api = {
+  checkpointUsage, deleteCheckpoint,
   makeId,
   createEntity,
   createEntitiesBulk,

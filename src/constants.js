@@ -41,7 +41,7 @@
   // entity type; user can swap to any of these from a picker.
   const ICONS_BY_TYPE = {
     npc: ['user', 'crown', 'skull', 'ghost', 'robot', 'eye', 'shield'],
-    location: ['mapPin', 'building', 'store', 'tent', 'anchor', 'rocket', 'door', 'mountain'],
+    location: ['mapPin', 'building', 'store', 'tent', 'anchor', 'rocket', 'door', 'mountain', 'wagon'],
     quest: ['flag', 'scroll', 'bookmark', 'crown', 'skull', 'shield']
   };
 
