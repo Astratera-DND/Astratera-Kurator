@@ -11,11 +11,14 @@
 
 ---
 
-Kurator is for game masters who prepare in a notes tool (Notion, or Astratera Kodex) and want something quicker than a wiki **while the game is running**. For the place and the moment you are in, it shows you the text to read aloud, who is there, which plot threads are open and which dice checks might come up. Nothing else gets in the way.
+This is a Session Notes Organizer for Dungeon Masters. 
+A passion project that I (with lots of help of AI) created for my own homebrew DND campaign. 
+You can create locations, NPCs, Dialog, Sections all based on "milestones" which you can use to track moments in time and much much more. 
+Then you have a deticated "play" screen in which you can jump through you Entities and moments in time. 
+There is a "mark as complete" checkbox that allows you to hide the note once it was read. 
+If you didn't mark something it will come up on the next "day" in case you just missed it. 
 
-It was written for a sci-fi D&D campaign, but nothing in it belongs to one setting. Everything stays on your own computer, in ordinary files you can open yourself. No account, no cloud.
-
-All screenshots in this document use the small example campaign that comes with the app.
+There is also a nice connection to Weltentor, another Tool, that allows you to control playlists, soundeffects and even concept art if you have that. (optional)
 
 ## Contents
 
