@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="docs/screenshots/logo.png" width="96" alt="Astratera Kurator">
+  <img src="renderer/KuratorBanner.png" alt="Astratera Kurator">
 </p>
 
 <h1 align="center">Astratera Kurator</h1>
