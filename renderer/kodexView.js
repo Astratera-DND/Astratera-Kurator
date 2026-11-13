@@ -197,6 +197,100 @@ function kxSendHTML() {
     <div id="kx-send-actions" class="inline" style="flex-wrap:wrap;gap:6px;margin-top:12px"></div>`;
 }
 
+// --- Import review (what Kodex sent vs. what Kurator holds) ----------------------------------------
+function kxReviewHTML() {
+  const st = kx();
+  const plan = st.plan;
+  if (!plan) return '';
+  const rows = kxEntityRows(plan);
+  const f = st.filter;
+  const colRows = (plan.collections || []).map((c) => ({ pe: Object.assign({ isCollection: true, type: 'collection', targets: [] }, c), counts: { [c.status]: 1 } }))
+    .concat((plan.dcChecks || []).map((c) => ({ pe: Object.assign({ isCollection: true, isCheck: true, type: 'DC check', targets: [] }, c), counts: { [c.status]: 1 } })));
+  const visible = rows.concat(colRows).filter(({ pe, counts }) => f === 'all' || (f === 'conflict' && counts.conflict) || (f === 'new' && (counts.new || pe.link.mode === 'new')) || (f === 'changes' && (counts.kodex || counts.new || counts.conflict || counts.kurator)));
+  const sel = plan.entities.find((e) => e.kodexId === st.selected) || (colRows.find((r) => r.pe.kodexId === st.selected) || {}).pe || (visible[0] && visible[0].pe) || null;
+  const cps = (campaign.checkpoints || []).filter((c) => !c.encounter).sort((a, b) => a.order - b.order);
+  const total = plan.counts;
+  const openConflicts = plan.entities.reduce((n, e) => n + e.targets.filter((t) => t.status === 'conflict' && !t.choice && e.link.mode !== 'skip').length, 0)
+    + (plan.collections || []).concat(plan.dcChecks || []).filter((c) => c.status === 'conflict' && !c.choice && c.link.mode !== 'skip').length;
+  const left = visible.map(({ pe, counts }) => `
+    <div class="kx-ent ${sel && sel.kodexId === pe.kodexId ? 'on' : ''} ${pe.link.mode === 'skip' ? 'kx-skipped' : ''}" onclick="window.app.kxSelect('${pe.kodexId}')">
+      <span class="kx-ent-name">${pe.isCollection ? `${icon(pe.isCheck ? 'dice' : 'wagon')} ` : ''}${esc(pe.name)}</span>
+      <span class="hint">${pe.type}</span>${pe.link.mode === 'new' ? '<span class="kx-badge kx-new" title="Will be created">+</span>' : ''}${kxBadges(counts)}
+    </div>`).join('') || '<p class="hint" style="padding:8px">Nothing matches this filter.</p>';
+  return `
+    <div class="kx-top">
+      <label>Put descriptions, sections and “present here” at
+        <select onchange="window.app.kxSetCheckpoint(this.value)">
+          ${cps.map((c) => `<option value="${c.id}" ${plan.checkpointId === c.id ? 'selected' : ''}>${esc(c.label)}${c.id === ui.curTime ? ' (current)' : ''}</option>`).join('')}
+          <option value="${kxs().NEW_CP}" ${plan.checkpointId === kxs().NEW_CP ? 'selected' : ''}>New checkpoint…</option>
+        </select></label>
+      ${plan.checkpointId === kxs().NEW_CP ? `<input type="text" value="${esc(plan.checkpointLabel)}" oninput="window.app.kxCheckpointLabel(this.value)" style="width:170px">` : ''}
+      <label class="tr-ex"><input type="checkbox" ${plan.useMilestones ? 'checked' : ''} onchange="window.app.kxMilestones(this.checked)"> Kodex milestones → checkpoints + notes</label>
+    </div>
+    <div class="kx-summary">${total.entities} in package${total.collections ? ` · ${total.collections} collection${total.collections === 1 ? '' : 's'}` : ''}${total.dcChecks ? ` · ${total.dcChecks} DC check${total.dcChecks === 1 ? '' : 's'}` : ''} · ${total.newEntities} new entities · ${total.new || 0} new items · ${(total.kodex || 0)} changed in Kodex · ${(total.kurator || 0)} changed in Kurator · <b class="${openConflicts ? 'kx-warn' : ''}">${total.conflict || 0} conflicts</b>
+      <span class="kx-bulk"><button class="icon-btn" onclick="window.app.kxBulk('kodex')">Take Kodex for all changes</button><button class="icon-btn" onclick="window.app.kxBulk('conflict-kurator')">Keep Kurator for all conflicts</button></span></div>
+    <div class="kx-filter">${[['all', 'All'], ['changes', 'Changes'], ['conflict', 'Conflicts'], ['new', 'New']].map(([k, l]) => `<button class="pill ${f === k ? 'on' : ''}" onclick="window.app.kxFilter('${k}')">${l}</button>`).join('')}</div>
+    <div class="kx-cols"><div class="kx-left">${left}</div><div class="kx-right">${sel ? kxEntityDetailHTML(sel) : ''}</div></div>
+    ${plan.warnings.length ? `<div class="hint" style="margin-top:8px">${plan.warnings.map(esc).join('<br>')}</div>` : ''}`;
+}
+
+// A collection or a DC check: one unit with its own status and choice.
+function kxCollectionDetailHTML(c) {
+  const id = c.kodexId;
+  const [label, cls] = KX_STATUS[c.status] || [c.status, ''];
+  const needs = c.status === 'conflict' && !c.choice;
+  const dis = c.link.mode === 'skip';
+  const linked = c.link.mode !== 'new' && c.link.mode !== 'skip' || (c.link.mode === 'skip' && c.link.kuratorId);
+  const isCheck = c.kind === 'dcCheck';
+  const linkSel = `<select onchange="window.app.kxColLink('${id}',this.value)">
+    ${linked ? `<option value="link" ${c.link.mode !== 'skip' && c.link.mode !== 'new' ? 'selected' : ''}>Update “${esc(c.kuratorName || c.name)}”${c.link.mode === 'name' ? ' (same name)' : ''}</option>` : ''}
+    <option value="new" ${c.link.mode === 'new' || (!linked && c.link.mode !== 'skip') ? 'selected' : ''}>Create a new ${isCheck ? 'DC check' : 'collection'}</option><option value="skip" ${c.link.mode === 'skip' ? 'selected' : ''}>Skip</option></select>`;
+  const ch = c.status === 'unchanged' ? '' : `<select ${dis ? 'disabled' : ''} class="${needs ? 'kx-needs' : ''}" onchange="window.app.kxColChoice('${id}',this.value)">
+    ${needs ? '<option value="" selected>Choose…</option>' : ''}${KX_CHOICES.filter((x) => x[0] !== 'both').map(([v, l]) => `<option value="${v}" ${c.choice === v ? 'selected' : ''}>${l}</option>`).join('')}</select>`;
+  return `<div class="kx-detail-head"><b>${icon(isCheck ? 'dice' : 'wagon')} ${esc(c.name)}</b> <span class="hint">${isCheck ? 'DC check' : 'collection'}${c.dice && c.dice.label ? ` · ${esc(c.dice.label)}` : ''}</span><span style="flex:1"></span>${linkSel}</div>
+    <div class="kx-target ${c.status === 'unchanged' ? 'kx-quiet' : ''}">
+      <div class="kx-target-head"><b>${isCheck ? 'DC check (table, outcomes, type)' : 'Encounter table and route'}</b><span class="kx-badge ${cls}">${label}</span><span style="flex:1"></span>${ch}</div>
+      ${c.status !== 'unchanged' ? `<div class="kx-two"><div><div class="hint">Kurator now</div><pre>${esc(c.kuratorText || '—')}</pre></div><div><div class="hint">Kodex</div><pre>${esc(c.kodexText || '—')}</pre></div></div>` : ''}
+    </div>
+    ${c.invalid ? `<p class="tr-warn">${esc(c.invalid)}: this check will be skipped.</p>` : ''}
+    <p class="hint">${isCheck ? 'Taking Kodex replaces this check\'s content. Its roll history stays, and texts that use it keep working.' : 'Taking Kodex replaces this collection\'s table (nothing is deleted: the encounters themselves stay in your library).'}</p>`;
+}
+
+function kxEntityDetailHTML(pe) {
+  if (pe.isCollection) return kxCollectionDetailHTML(pe);
+  const id = pe.kodexId;
+  const linkSel = pe.link.mode === 'name' || pe.link.mode === 'kuratorId' || pe.link.mode === 'external'
+    ? `<select onchange="window.app.kxLink('${id}',this.value)">
+         <option value="link" ${pe.link.mode !== 'skip' && pe.link.mode !== 'new' ? 'selected' : ''}>Link to existing “${esc(pe.kuratorName || pe.name)}”${pe.link.mode === 'name' ? ' (same name)' : ''}</option>
+         <option value="new" ${pe.link.mode === 'new' ? 'selected' : ''}>Create a new ${pe.type}</option><option value="skip" ${pe.link.mode === 'skip' ? 'selected' : ''}>Skip</option></select>`
+    : `<select onchange="window.app.kxLink('${id}',this.value)"><option value="new" ${pe.link.mode !== 'skip' ? 'selected' : ''}>Create a new ${pe.type}</option><option value="skip" ${pe.link.mode === 'skip' ? 'selected' : ''}>Skip</option></select>`;
+  const targets = pe.targets.map((t, i) => {
+    const [label, cls] = KX_STATUS[t.status] || [t.status, ''];
+    const dis = pe.link.mode === 'skip';
+    const needs = t.status === 'conflict' && !t.choice;
+    const ch = t.status === 'unchanged' || t.status === 'gone' || t.status === 'missing'
+      ? '' : `<select ${dis ? 'disabled' : ''} class="${needs ? 'kx-needs' : ''}" onchange="window.app.kxChoice('${id}',${i},this.value)">
+          ${needs ? '<option value="" selected>Choose…</option>' : ''}${KX_CHOICES.filter((c) => c[0] !== 'both' || t.kind === 'text').map(([v, l]) => `<option value="${v}" ${t.choice === v ? 'selected' : ''}>${l}</option>`).join('')}</select>`;
+    const show = t.status !== 'unchanged';
+    return `<div class="kx-target ${show ? '' : 'kx-quiet'}">
+      <div class="kx-target-head"><b>${esc(t.label)}</b><span class="kx-badge ${cls}">${label}</span>${t.readonly ? '<span class="hint" title="Kodex does not accept this field back">Kodex-only</span>' : ''}<span style="flex:1"></span>${ch}</div>
+      ${show ? `<div class="kx-two"><div><div class="hint">Kurator now</div><pre>${esc(t.kuratorText || '—')}</pre></div><div><div class="hint">Kodex</div><pre>${esc(t.kodexText || '—')}</pre></div></div>` : ''}
+    </div>`;
+  }).join('');
+  return `<div class="kx-detail-head"><b>${esc(pe.name)}</b> <span class="hint">${pe.type}</span><span style="flex:1"></span>${linkSel}</div>${targets || '<p class="hint">Nothing to import for this one.</p>'}`;
+}
+
+function kxReportHTML() {
+  const r = kx().report;
+  const list = (title, arr) => arr && arr.length ? `<div class="section-label">${title}</div><ul class="kx-list">${arr.map((x) => `<li>${esc(x)}</li>`).join('')}</ul>` : '';
+  const dropped = Object.entries(r.dropped || {}).map(([k, n]) => `${k} ×${n}`).join(', ');
+  return `<div class="tr-ok"><b>Import finished.</b> ${r.created.length} created · ${r.updated.length} updated · ${r.applied} items written · ${r.unchanged} already in sync${r.groupsCreated ? ` · ${r.groupsCreated} groups` : ''}${r.checkpointsCreated ? ` · ${r.checkpointsCreated} checkpoints` : ''}${r.imagesSaved ? ` · ${r.imagesSaved} images` : ''}.</div>
+    ${list('Created', r.created)}${list('Updated', r.updated)}${list('Collections created', r.collectionsCreated)}${list('Collections updated', r.collectionsUpdated)}${list('DC checks created', r.checksCreated)}${list('DC checks updated', r.checksUpdated)}
+    ${list('Conflicts you left open (nothing was changed there)', r.conflictsOpen)}${list('Flagged', r.flagged)}${list('Notes', r.warnings)}
+    ${dropped ? `<p class="hint">Not carried over (Kurator has no place for them): ${esc(dropped)}.</p>` : ''}
+    <p class="hint">A backup snapshot was taken just before applying. Run the same import again at any time: only new changes show up.</p>`;
+}
+
 function renderKodexModal() {
   const st = kx();
   const body = document.getElementById('kodex-body');

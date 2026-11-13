@@ -197,4 +197,5 @@ require('./kodexBridge.test');
 require('./encounters.test');
 require('./dcchecks.test');
 require('./dialogAssignee.test');
+require('./rendererFunctions.test');
 if (failures) { console.log(`${failures} failed`); process.exit(1); }
